@@ -487,7 +487,7 @@ resource "kubectl_manifest" "karpenter_node_pool_jupyter_very_large" {
               values: ["r7i", "r6i", "r5"]
             - key: karpenter.k8s.aws/instance-size
               operator: In
-              values: ["4xlarge"]  # ~128GB RAM
+              values: ["8xlarge"]  # ~256GB RAM
             - key: karpenter.sh/capacity-type
               operator: In
               values: ["on-demand"]
