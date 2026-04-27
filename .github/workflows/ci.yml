@@ -25,7 +25,28 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Check formatting
-        run: terraform fmt -check -recursive -diff
+        id: fmt
+        run: |
+          echo "::group::terraform fmt -check -recursive -diff"
+          terraform fmt -check -recursive -diff 2>&1 | tee fmt-output.txt
+          echo "::endgroup::"
+
+      - name: Job summary
+        if: always()
+        run: |
+          if [ "${{ steps.fmt.outcome }}" == "success" ]; then
+            echo "## :white_check_mark: Formatting — All files pass" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## :x: Formatting — Files need formatting"
+              echo ""
+              echo '```diff'
+              cat fmt-output.txt
+              echo '```'
+              echo ""
+              echo "Run \`terraform fmt -recursive\` to fix."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   validate:
     name: Validate (${{ matrix.env }})
@@ -41,10 +62,34 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Init
-        run: terraform -chdir=${{ matrix.env }} init -backend=false
+        id: init
+        run: |
+          echo "::group::terraform init (${{ matrix.env }})"
+          terraform -chdir=${{ matrix.env }} init -backend=false 2>&1 | tee init-output.txt
+          echo "::endgroup::"
 
       - name: Validate
-        run: terraform -chdir=${{ matrix.env }} validate
+        id: validate
+        run: |
+          echo "::group::terraform validate (${{ matrix.env }})"
+          terraform -chdir=${{ matrix.env }} validate 2>&1 | tee validate-output.txt
+          echo "::endgroup::"
+
+      - name: Job summary
+        if: always()
+        run: |
+          STATUS="${{ steps.validate.outcome }}"
+          if [ "$STATUS" == "success" ]; then
+            echo "## :white_check_mark: Validate (${{ matrix.env }}) — Valid configuration" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## :x: Validate (${{ matrix.env }}) — Validation failed"
+              echo ""
+              echo '```'
+              cat validate-output.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   docs:
     name: Terraform Docs
@@ -60,6 +105,7 @@ jobs:
           cache: enable
 
       - name: Check docs are up-to-date
+        id: docs
         run: |
           MODULES=(
             applications
@@ -73,15 +119,43 @@ jobs:
             staging
           )
 
+          echo "::group::Regenerating docs"
           for mod in "${MODULES[@]}"; do
             if [ -f "$mod/main.tf" ]; then
+              echo "  $mod/"
               terraform-docs markdown table --output-file README.md --output-mode inject "$mod/"
             fi
           done
+          echo "::endgroup::"
 
           if ! git diff --exit-code -- '*.md'; then
+            CHANGED=$(git diff --name-only -- '*.md' | head -20)
+            {
+              echo "changed<<EOF"
+              echo "$CHANGED"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
             echo "::error::Terraform docs are out of date. Run 'pre-commit run terraform_docs --all-files' or update READMEs manually."
             exit 1
+          fi
+
+      - name: Job summary
+        if: always()
+        run: |
+          if [ "${{ steps.docs.outcome }}" == "success" ]; then
+            echo "## :white_check_mark: Docs — All READMEs up-to-date" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## :x: Docs — READMEs need regeneration"
+              echo ""
+              echo "**Outdated files:**"
+              echo ""
+              echo '```'
+              echo "${{ steps.docs.outputs.changed }}"
+              echo '```'
+              echo ""
+              echo "Run \`pre-commit run terraform_docs --all-files\` to fix."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
   checkov:
@@ -91,6 +165,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Checkov
+        id: checkov
         uses: bridgecrewio/checkov-action@master
         with:
           directory: .
@@ -99,3 +174,14 @@ jobs:
           soft_fail: true
           output_format: cli
           config_file: .checkov.yml
+
+      - name: Job summary
+        if: always()
+        run: |
+          if [ "${{ steps.checkov.outcome }}" == "success" ]; then
+            echo "## :white_check_mark: Security Scan — No new issues found" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## :warning: Security Scan — Issues detected (soft-fail)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo ""
+          echo "Config: \`.checkov.yml\` | Mode: \`soft_fail: true\`" >> "$GITHUB_STEP_SUMMARY"

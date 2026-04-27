@@ -52,25 +52,54 @@ jobs:
               name=PLAN_OUTPUT_BUCKET,value=$PLAN_OUTPUT_BUCKET \
             --query 'build.id' \
             --output text)
-          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
-
-          echo "Waiting for CodeBuild $BUILD_ID..."
-          while true; do
-            STATUS=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
-              --query 'builds[0].buildStatus' --output text)
-            echo "Status: $STATUS"
-            if [ "$STATUS" != "IN_PROGRESS" ]; then break; fi
-            sleep 15
-          done
-
-          if [ "$STATUS" != "SUCCEEDED" ]; then
-            echo "::error::CodeBuild failed with status $STATUS"
-            exit 1
-          fi
 
           BUILD_NUMBER=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
             --query 'builds[0].buildNumber' --output text)
+          BUILD_URL="https://${AWS_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${PLAN_PROJECT}/build/${PLAN_PROJECT}%3A${BUILD_NUMBER}"
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
           echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "build_url=$BUILD_URL" >> "$GITHUB_OUTPUT"
+
+          echo "::notice::CodeBuild #$BUILD_NUMBER started — $BUILD_URL"
+          echo "::group::CodeBuild plan #$BUILD_NUMBER"
+          echo "Project:  $PLAN_PROJECT"
+          echo "Build:    #$BUILD_NUMBER"
+          echo "ID:       $BUILD_ID"
+          echo "Console:  $BUILD_URL"
+          echo ""
+          echo "Polling status..."
+          echo ""
+
+          SECONDS=0
+          LAST_PHASE=""
+          while true; do
+            BUILD_INFO=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+              --query 'builds[0].{Status:buildStatus,Phase:currentPhase}' --output text)
+            STATUS=$(echo "$BUILD_INFO" | awk '{print $1}')
+            PHASE=$(echo "$BUILD_INFO" | awk '{print $2}')
+            ELAPSED=$(( SECONDS / 60 ))m$(( SECONDS % 60 ))s
+
+            if [ "$PHASE" != "$LAST_PHASE" ]; then
+              echo "[$ELAPSED] Phase: $PHASE"
+              LAST_PHASE="$PHASE"
+            fi
+
+            if [ "$STATUS" != "IN_PROGRESS" ]; then
+              echo ""
+              echo "Build completed: $STATUS (${ELAPSED})"
+              break
+            fi
+            sleep 15
+          done
+          echo "::endgroup::"
+
+          if [ "$STATUS" != "SUCCEEDED" ]; then
+            echo "::error::CodeBuild failed with status $STATUS — $BUILD_URL"
+            exit 1
+          fi
+
+          echo ""
+          echo "Plan completed in ${ELAPSED}"
 
       - name: Fetch and post plan output
         if: always() && steps.codebuild.outcome == 'success'
@@ -96,7 +125,9 @@ jobs:
                 { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 }
               );
 
-              const body = `## Terraform Plan (Staging) via CodeBuild\n\n\`\`\`\n${plan.substring(0, 60000)}\n\`\`\``;
+              const buildNumber = `${{ steps.codebuild.outputs.build_number }}`;
+              const buildUrl = `${{ steps.codebuild.outputs.build_url }}`;
+              const body = `## Terraform Plan (Staging)\n\n> **CodeBuild #${buildNumber}** — [View in AWS Console](${buildUrl})\n\n<details><summary>Plan output</summary>\n\n\`\`\`hcl\n${plan.substring(0, 60000)}\n\`\`\`\n\n</details>`;
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -106,6 +137,22 @@ jobs:
             } catch (e) {
               console.log('Failed to fetch plan output:', e.message);
             }
+
+      - name: Job summary
+        if: always()
+        run: |
+          STATUS="${{ steps.codebuild.outcome }}"
+          BUILD="${{ steps.codebuild.outputs.build_number || 'N/A' }}"
+          URL="${{ steps.codebuild.outputs.build_url }}"
+          {
+            echo "## Plan Result: ${STATUS}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Build** | #${BUILD} |"
+            echo "| **Console** | [View in AWS](${URL}) |"
+            echo "| **Trigger** | PR #${{ github.event.pull_request.number }} (${{ github.head_ref }}) |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   apply:
     name: Terraform Apply (Staging)
@@ -138,18 +185,68 @@ jobs:
               name=PLAN_OUTPUT_BUCKET,value=$PLAN_OUTPUT_BUCKET \
             --query 'build.id' \
             --output text)
-          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
 
-          echo "Waiting for CodeBuild $BUILD_ID..."
+          BUILD_NUMBER=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+            --query 'builds[0].buildNumber' --output text)
+          BUILD_URL="https://${AWS_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${APPLY_PROJECT}/build/${APPLY_PROJECT}%3A${BUILD_NUMBER}"
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "build_url=$BUILD_URL" >> "$GITHUB_OUTPUT"
+
+          echo "::notice::CodeBuild #$BUILD_NUMBER started — $BUILD_URL"
+          echo "::group::CodeBuild apply #$BUILD_NUMBER"
+          echo "Project:  $APPLY_PROJECT"
+          echo "Build:    #$BUILD_NUMBER"
+          echo "ID:       $BUILD_ID"
+          echo "Console:  $BUILD_URL"
+          echo ""
+          echo "Polling status..."
+          echo ""
+
+          SECONDS=0
+          LAST_PHASE=""
           while true; do
-            STATUS=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
-              --query 'builds[0].buildStatus' --output text)
-            echo "Status: $STATUS"
-            if [ "$STATUS" != "IN_PROGRESS" ]; then break; fi
+            BUILD_INFO=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+              --query 'builds[0].{Status:buildStatus,Phase:currentPhase}' --output text)
+            STATUS=$(echo "$BUILD_INFO" | awk '{print $1}')
+            PHASE=$(echo "$BUILD_INFO" | awk '{print $2}')
+            ELAPSED=$(( SECONDS / 60 ))m$(( SECONDS % 60 ))s
+
+            if [ "$PHASE" != "$LAST_PHASE" ]; then
+              echo "[$ELAPSED] Phase: $PHASE"
+              LAST_PHASE="$PHASE"
+            fi
+
+            if [ "$STATUS" != "IN_PROGRESS" ]; then
+              echo ""
+              echo "Build completed: $STATUS (${ELAPSED})"
+              break
+            fi
             sleep 15
           done
+          echo "::endgroup::"
 
           if [ "$STATUS" != "SUCCEEDED" ]; then
-            echo "::error::CodeBuild failed with status $STATUS"
+            echo "::error::CodeBuild failed with status $STATUS — $BUILD_URL"
             exit 1
           fi
+
+          echo ""
+          echo "Apply completed in ${ELAPSED}"
+
+      - name: Job summary
+        if: always()
+        run: |
+          STATUS="${{ steps.codebuild.outcome }}"
+          BUILD="${{ steps.codebuild.outputs.build_number || 'N/A' }}"
+          URL="${{ steps.codebuild.outputs.build_url }}"
+          {
+            echo "## Apply Result: ${STATUS}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Build** | #${BUILD} |"
+            echo "| **Console** | [View in AWS](${URL}) |"
+            echo "| **Branch** | \`${{ github.ref_name }}\` |"
+            echo "| **Trigger** | ${{ github.event_name }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
