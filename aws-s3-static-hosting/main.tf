@@ -83,6 +83,26 @@ resource "aws_s3_bucket_policy" "this" {
   })
 }
 
+resource "aws_cloudfront_function" "url_rewrite" {
+  name    = "website-${lower(var.project)}-${lower(var.environment)}-url-rewrite"
+  runtime = "cloudfront-js-2.0"
+  comment = "Rewrite extensionless paths to index.html for Docusaurus trailingSlash:true"
+  publish = true
+
+  code = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+      if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+      } else if (!uri.includes('.')) {
+        request.uri += '/index.html';
+      }
+      return request;
+    }
+  EOT
+}
+
 resource "aws_acm_certificate" "this" {
   region            = "us-east-1"
   domain_name       = var.domain_name
@@ -155,6 +175,11 @@ resource "aws_cloudfront_distribution" "this" {
     cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
 
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.url_rewrite.arn
+    }
   }
 
   ordered_cache_behavior {
@@ -172,14 +197,8 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
     error_code         = 404
-    response_code      = 200
+    response_code      = 404
     response_page_path = "/index.html"
   }
 
@@ -260,7 +279,7 @@ resource "aws_cloudfront_response_headers_policy" "security" {
 
     content_security_policy {
       override                = true
-      content_security_policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'"
+      content_security_policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     }
   }
 }
