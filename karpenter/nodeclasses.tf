@@ -261,7 +261,7 @@ resource "kubectl_manifest" "karpenter_node_pool_jupyter_standard" {
           requirements:
             - key: karpenter.sh/capacity-type
               operator: In
-              values: ["spot", "on-demand"]
+              values: ["on-demand"]
 
             - key: kubernetes.io/arch
               operator: In
