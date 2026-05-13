@@ -62,6 +62,7 @@
 | [postgresql_grant.readonly_sequence_permissions](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/grant) | resource |
 | [postgresql_grant.readonly_table_permissions](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/grant) | resource |
 | [postgresql_grant.schema_usage](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/grant) | resource |
+| [postgresql_grant_role.odc_manage](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/grant_role) | resource |
 | [postgresql_role.app_users](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/role) | resource |
 | [random_password.argo](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_password.db_random_string](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |

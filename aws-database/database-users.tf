@@ -228,6 +228,15 @@ resource "postgresql_role" "app_users" {
   depends_on = [module.db]
 }
 
+# --- ODC role grants ---
+
+resource "postgresql_grant_role" "odc_manage" {
+  role       = "odc"
+  grant_role = "odc_manage"
+
+  depends_on = [postgresql_role.app_users]
+}
+
 # --- Connect grants ---
 
 resource "postgresql_grant" "database_connect" {
