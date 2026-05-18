@@ -21,7 +21,7 @@ module "s3_bucket" {
   project                   = var.project
   environment               = var.environment
   default_tags              = var.default_tags
-  lifecycle_expiration_days = 90
+  lifecycle_expiration_days = 365
 }
 
 module "website" {

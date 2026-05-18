@@ -93,6 +93,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "public" {
       days_after_initiation = 7
     }
 
+    transition {
+      days          = 60
+      storage_class = "ONEZONE_IA"
+    }
+
     expiration {
       days = var.lifecycle_expiration_days
     }
