@@ -257,7 +257,7 @@ resource "postgresql_grant" "schema_usage" {
   role        = each.key
   object_type = "schema"
   schema      = "public"
-  privileges  = ["USAGE"]
+  privileges  = each.value.permissions == "full" ? ["USAGE", "CREATE"] : ["USAGE"]
 
   depends_on = [postgresql_grant.database_connect]
 }
@@ -292,19 +292,6 @@ resource "postgresql_grant" "full_sequence_permissions" {
   depends_on = [postgresql_grant.schema_usage]
 }
 
-resource "postgresql_grant" "full_schema_create" {
-  for_each = {
-    for k, v in local.app_users : k => v if v.permissions == "full"
-  }
-
-  database    = each.value.target_database
-  role        = each.key
-  object_type = "schema"
-  schema      = "public"
-  privileges  = ["CREATE"]
-
-  depends_on = [postgresql_grant.schema_usage]
-}
 
 # --- Read-only permissions ---
 
