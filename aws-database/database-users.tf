@@ -204,6 +204,13 @@ resource "postgresql_extension" "postgis" {
   depends_on = [postgresql_database.app_databases]
 }
 
+resource "postgresql_extension" "postgis_stac" {
+  name     = "postgis"
+  database = "stac"
+
+  depends_on = [postgresql_database.app_databases]
+}
+
 # --- Databases ---
 
 resource "postgresql_database" "app_databases" {
