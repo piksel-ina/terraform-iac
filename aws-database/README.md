@@ -53,6 +53,7 @@
 | [postgresql_default_privileges.readonly_sequence_defaults](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/default_privileges) | resource |
 | [postgresql_default_privileges.readonly_table_defaults](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/default_privileges) | resource |
 | [postgresql_extension.postgis](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/extension) | resource |
+| [postgresql_extension.postgis_stac](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/extension) | resource |
 | [postgresql_grant.database_connect](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/grant) | resource |
 | [postgresql_grant.full_sequence_permissions](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/grant) | resource |
 | [postgresql_grant.full_table_permissions](https://registry.terraform.io/providers/cyrilgdn/postgresql/1.26.0/docs/resources/grant) | resource |
