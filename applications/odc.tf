@@ -206,6 +206,16 @@ resource "aws_wafv2_web_acl" "ows_cache" {
       managed_rule_group_statement {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
+
+        # OGC/WMS clients (browsers on CORS preflight, QGIS, GDAL, rasterio)
+        # frequently omit the User-Agent header, so blocking on it breaks
+        # legitimate WMS traffic. Count only.
+        rule_action_override {
+          name = "NoUserAgent_HEADER"
+          action_to_use {
+            count {}
+          }
+        }
       }
     }
     visibility_config {
