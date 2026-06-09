@@ -313,7 +313,7 @@ resource "postgresql_grant" "readonly_table_permissions" {
   schema      = "public"
   privileges  = ["SELECT"]
 
-  depends_on = [postgresql_grant.schema_usage]
+  depends_on = [postgresql_grant.schema_usage, postgresql_grant.full_table_permissions]
 }
 
 resource "postgresql_grant" "readonly_sequence_permissions" {
