@@ -232,6 +232,17 @@ resource "postgresql_role" "app_users" {
   login    = true
   password = each.value.password
 
+  # Role memberships are owned by each app's own bootstrap, not Terraform:
+  #   - odc/odcread  -> odc_manage/odc_user   (odc-schema-init workflow)
+  #   - stac/stacread-> pgstac_*              (pgstac-init workflow)
+  # The postgresql_role resource otherwise reads live memberships into state on
+  # refresh and reconciles them toward the empty config value, which REVOKES
+  # them on the next apply (took Explorer/OWS down on 2026-06-09, build #29).
+  # ignore_changes stops Terraform from asserting any authority over memberships.
+  lifecycle {
+    ignore_changes = [roles]
+  }
+
   depends_on = [module.db]
 }
 
