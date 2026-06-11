@@ -131,4 +131,5 @@ No requirements.
 | <a name="output_cluster_tls_certificate_sha1_fingerprint"></a> [cluster\_tls\_certificate\_sha1\_fingerprint](#output\_cluster\_tls\_certificate\_sha1\_fingerprint) | EKS Cluster TLS Certificate SHA1 Fingerprint |
 | <a name="output_efs_csi_irsa_role_arn"></a> [efs\_csi\_irsa\_role\_arn](#output\_efs\_csi\_irsa\_role\_arn) | IAM role ARN for EFS CSI driver controller service account |
 | <a name="output_efs_filesystem_id"></a> [efs\_filesystem\_id](#output\_efs\_filesystem\_id) | EFS filesystem ID for CSI driver and StorageClasses |
+| <a name="output_efs_security_group_id"></a> [efs\_security\_group\_id](#output\_efs\_security\_group\_id) | Security group ID of the EFS mount targets (for granting NFS access to in-VPC clients) |
 <!-- END_TF_DOCS -->

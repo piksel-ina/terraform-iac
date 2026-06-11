@@ -45,6 +45,11 @@ output "efs_csi_irsa_role_arn" {
   value       = module.efs_csi_irsa_role.iam_role_arn
 }
 
+output "efs_security_group_id" {
+  description = "Security group ID of the EFS mount targets (for granting NFS access to in-VPC clients)"
+  value       = aws_security_group.efs.id
+}
+
 output "cluster_security_group_id" {
   description = "Security group ID attached to the EKS cluster control plane ENIs"
   value       = module.eks.cluster_security_group_id
