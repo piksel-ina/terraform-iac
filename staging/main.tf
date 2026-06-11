@@ -156,12 +156,11 @@ resource "aws_iam_policy" "github_tf_deploy" {
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject",
-          "s3:ListBucket"
+          "logs:GetLogEvents"
         ]
         Resource = [
-          "arn:aws:s3:::piksel-staging-tfstate",
-          "arn:aws:s3:::piksel-staging-tfstate/*"
+          module.codebuild.plan_log_group_arn,
+          module.codebuild.apply_log_group_arn
         ]
       }
     ]
@@ -263,7 +262,6 @@ module "codebuild" {
   private_subnet_ids  = module.networks.private_subnets
   cluster_name        = local.cluster_name
   tf_state_bucket_arn = "arn:aws:s3:::piksel-staging-tfstate"
-  plan_output_bucket  = "piksel-staging-tfstate"
   default_tags        = var.default_tags
 }
 

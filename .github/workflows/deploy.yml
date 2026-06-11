@@ -16,7 +16,6 @@ permissions:
 
 env:
   AWS_REGION: "ap-southeast-3"
-  PLAN_OUTPUT_BUCKET: "piksel-staging-tfstate"
   PLAN_PROJECT: "Piksel-tf-plan"
   APPLY_PROJECT: "Piksel-tf-apply"
 
@@ -47,7 +46,6 @@ jobs:
               name=PR_NUMBER,value="$PR_NUMBER" \
               name=PR_BRANCH,value="$PR_BRANCH" \
               name=BRANCH,value= \
-              name=PLAN_OUTPUT_BUCKET,value=$PLAN_OUTPUT_BUCKET \
             --query 'build.id' \
             --output text)
           BUILD_NUMBER=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
@@ -81,24 +79,47 @@ jobs:
             const buildId = `${{ steps.codebuild.outputs.build_id }}`;
 
             try {
-              const listOutput = execSync(
-                `aws s3 ls s3://${process.env.PLAN_OUTPUT_BUCKET}/plans/ --recursive | grep "${buildId.replace(/:/g, '\\\\:')}" | tail -1 | awk '{print $4}'`,
+              const logs = JSON.parse(execSync(
+                `aws codebuild batch-get-builds --ids "${buildId}" ` +
+                `--query 'builds[0].logs.{group:groupName,stream:streamName}' --output json`,
                 { encoding: 'utf8' }
-              );
-              const key = listOutput.trim();
-              if (!key) {
-                console.log('No plan output found in S3');
+              ));
+
+              if (!logs.group || !logs.stream) {
+                console.log('No CloudWatch log info on the build');
                 return;
               }
 
-              const plan = execSync(
-                `aws s3 cp s3://${process.env.PLAN_OUTPUT_BUCKET}/${key} -`,
-                { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 }
+              // --no-start-from-head: the summary markers are at the tail of the log.
+              const raw = execSync(
+                `aws logs get-log-events ` +
+                `--log-group-name "${logs.group}" --log-stream-name "${logs.stream}" ` +
+                `--limit 10000 --no-start-from-head ` +
+                `--query 'events[].message' --output text`,
+                { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 }
               );
+
+              const m = raw.match(/===TF_PLAN_SUMMARY_START===([\s\S]*?)===TF_PLAN_SUMMARY_END===/);
+              const summary = m ? m[1].trim() : '';
 
               const buildNumber = `${{ steps.codebuild.outputs.build_number }}`;
               const buildUrl = `${{ steps.codebuild.outputs.build_url }}`;
-              const body = `## Terraform Plan (Staging)\n\n> **CodeBuild #${buildNumber}** — [View in AWS Console](${buildUrl})\n\n<details><summary>Plan output</summary>\n\n\`\`\`hcl\n${plan.substring(0, 60000)}\n\`\`\`\n\n</details>`;
+
+              const summaryBlock = summary
+                ? `\`\`\`diff\n${summary.substring(0, 60000)}\n\`\`\``
+                : '_No changes._';
+
+              const body = [
+                '## Terraform Plan (Staging)',
+                '',
+                `> **CodeBuild #${buildNumber}** — [View full plan in AWS Console](${buildUrl})`,
+                '',
+                '### Change summary',
+                summaryBlock,
+                '',
+                '<sub>Full plan output is in the CodeBuild build log (link above).</sub>',
+              ].join('\n');
+
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -106,7 +127,7 @@ jobs:
                 body: body
               });
             } catch (e) {
-              console.log('Failed to fetch plan output:', e.message);
+              console.log('Failed to fetch plan summary:', e.message);
             }
 
   apply:
@@ -132,7 +153,6 @@ jobs:
               name=PR_NUMBER,value= \
               name=PR_BRANCH,value= \
               name=BRANCH,value=${{ github.ref_name }} \
-              name=PLAN_OUTPUT_BUCKET,value=$PLAN_OUTPUT_BUCKET \
             --query 'build.id' \
             --output text)
           BUILD_NUMBER=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \

@@ -110,11 +110,6 @@ resource "aws_codebuild_project" "plan" {
       name  = "TF_ACTION"
       value = "plan"
     }
-
-    environment_variable {
-      name  = "PLAN_OUTPUT_BUCKET"
-      value = var.plan_output_bucket
-    }
   }
 
   source {
@@ -169,11 +164,6 @@ resource "aws_codebuild_project" "apply" {
     environment_variable {
       name  = "TF_ACTION"
       value = "apply"
-    }
-
-    environment_variable {
-      name  = "PLAN_OUTPUT_BUCKET"
-      value = var.plan_output_bucket
     }
   }
 

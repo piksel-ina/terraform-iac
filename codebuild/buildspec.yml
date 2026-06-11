@@ -38,15 +38,24 @@ phases:
           terraform -chdir=staging plan -no-color 2>&1 | tee /tmp/plan_output.txt
           exit "${PIPESTATUS[0]}"
         elif [ "$TF_ACTION" = "apply" ]; then
-          terraform -chdir=staging apply -auto-approve -no-color 2>&1 | tee /tmp/apply_output.txt
-          exit "${PIPESTATUS[0]}"
+          terraform -chdir=staging apply -auto-approve -no-color
         fi
 
   post_build:
     commands:
       - |
+        # Markers are the contract with the deploy workflow, which extracts the
+        # summary between them from CloudWatch and posts it to the PR.
         if [ "$TF_ACTION" = "plan" ] && [ -f /tmp/plan_output.txt ]; then
-          aws s3 cp /tmp/plan_output.txt "s3://${PLAN_OUTPUT_BUCKET}/plans/${CODEBUILD_BUILD_ID}.txt"
-        elif [ "$TF_ACTION" = "apply" ] && [ -f /tmp/apply_output.txt ]; then
-          aws s3 cp /tmp/apply_output.txt "s3://${PLAN_OUTPUT_BUCKET}/plans/${CODEBUILD_BUILD_ID}-apply.txt"
+          echo "===TF_PLAN_SUMMARY_START==="
+          grep -E '^  # .* (will be|must be) ' /tmp/plan_output.txt | sed -E '
+            s|^  # (.*) will be created$|+ \1  (create)|;
+            s|^  # (.*) will be destroyed$|- \1  (destroy)|;
+            s|^  # (.*) will be updated in-place$|~ \1  (update)|;
+            s|^  # (.*) must be replaced$|-/+ \1  (replace)|;
+            s|^  # (.*) will be read during apply$|  \1  (read)|;
+          ' || true
+          echo
+          grep -E '^(Plan:|No changes\.|Error:)' /tmp/plan_output.txt || true
+          echo "===TF_PLAN_SUMMARY_END==="
         fi

@@ -50,11 +50,6 @@ variable "tf_state_bucket_arn" {
   type        = string
 }
 
-variable "plan_output_bucket" {
-  description = "S3 bucket name for plan output artifacts"
-  type        = string
-}
-
 variable "default_tags" {
   description = "Default tags for all resources"
   type        = map(string)
