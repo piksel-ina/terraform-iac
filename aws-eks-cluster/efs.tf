@@ -21,26 +21,9 @@ module "efs_csi_irsa_role" {
 
 # --- Security group for EFS ---
 resource "aws_security_group" "efs" {
-  #checkov:skip=CKV_AWS_382:Standard unrestricted egress for EFS. NFS mount requires outbound connectivity.
   name_prefix = "${local.cluster}-efs-"
   description = "Security group for EFS file system access from EKS cluster"
   vpc_id      = var.vpc_id
-
-  ingress {
-    from_port       = 2049
-    to_port         = 2049
-    protocol        = "tcp"
-    security_groups = [module.eks.node_security_group_id]
-    description     = "NFS traffic from EKS cluster"
-  }
-
-  egress {
-    description = "Allow all outbound traffic from EFS"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   lifecycle {
     create_before_destroy = true
@@ -49,6 +32,27 @@ resource "aws_security_group" "efs" {
   tags = merge(local.tags, {
     Name = "${local.cluster}-efs-sg"
   })
+}
+
+resource "aws_security_group_rule" "efs_ingress_nodes" {
+  description              = "NFS traffic from EKS cluster nodes"
+  type                     = "ingress"
+  from_port                = 2049
+  to_port                  = 2049
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.efs.id
+  source_security_group_id = module.eks.node_security_group_id
+}
+
+resource "aws_security_group_rule" "efs_egress_all" {
+  #checkov:skip=CKV_AWS_382:Standard unrestricted egress for EFS. NFS mount requires outbound connectivity.
+  description       = "Allow all outbound traffic from EFS"
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.efs.id
 }
 
 # --- EFS File System ---
