@@ -146,7 +146,7 @@ resource "kubectl_manifest" "pv_efs_coastline_data_argo" {
         storage = "1Gi"
       }
       volumeMode                    = "Filesystem"
-      accessModes                   = ["ReadOnlyMany"]
+      accessModes                   = ["ReadWriteMany"]
       persistentVolumeReclaimPolicy = "Retain"
       storageClassName              = ""
       csi = {
@@ -171,7 +171,7 @@ resource "kubectl_manifest" "pvc_efs_coastline_data_argo" {
       namespace = "argo-workflows"
     }
     spec = {
-      accessModes      = ["ReadOnlyMany"]
+      accessModes      = ["ReadWriteMany"]
       storageClassName = ""
       volumeName       = "pv-efs-coastline-data-argo"
       resources = {
