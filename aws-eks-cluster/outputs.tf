@@ -40,6 +40,11 @@ output "efs_filesystem_id" {
   value       = aws_efs_file_system.data.id
 }
 
+output "efs_coastline_readonly_access_point_id" {
+  description = "EFS access point ID for read-only coastline mount (used by argo-workflows)"
+  value       = aws_efs_access_point.coastline_readonly.id
+}
+
 output "efs_csi_irsa_role_arn" {
   description = "IAM role ARN for EFS CSI driver controller service account"
   value       = module.efs_csi_irsa_role.iam_role_arn

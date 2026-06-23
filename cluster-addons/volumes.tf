@@ -129,3 +129,56 @@ resource "kubectl_manifest" "pvc_efs_public_data_argo" {
     }
   })
 }
+
+# --- EFS PersistentVolume for Argo coastline ---
+
+resource "kubectl_manifest" "pv_efs_coastline_data_argo" {
+  depends_on = [helm_release.aws_efs_csi_driver]
+
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "PersistentVolume"
+    metadata = {
+      name = "pv-efs-coastline-data-argo"
+    }
+    spec = {
+      capacity = {
+        storage = "1Gi"
+      }
+      volumeMode                    = "Filesystem"
+      accessModes                   = ["ReadOnlyMany"]
+      persistentVolumeReclaimPolicy = "Retain"
+      storageClassName              = ""
+      csi = {
+        driver       = "efs.csi.aws.com"
+        volumeHandle = "${var.efs_filesystem_id}::${var.efs_coastline_readonly_access_point_id}"
+      }
+    }
+  })
+}
+
+resource "kubectl_manifest" "pvc_efs_coastline_data_argo" {
+  depends_on = [
+    kubectl_manifest.pv_efs_coastline_data_argo,
+    helm_release.aws_efs_csi_driver,
+  ]
+
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "PersistentVolumeClaim"
+    metadata = {
+      name      = "efs-coastline-data"
+      namespace = "argo-workflows"
+    }
+    spec = {
+      accessModes      = ["ReadOnlyMany"]
+      storageClassName = ""
+      volumeName       = "pv-efs-coastline-data-argo"
+      resources = {
+        requests = {
+          storage = "1Gi"
+        }
+      }
+    }
+  })
+}
