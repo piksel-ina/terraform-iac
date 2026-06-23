@@ -52,9 +52,34 @@ resource "kubectl_manifest" "pvc_efs_public_data_jupyterhub" {
   })
 }
 
+resource "kubectl_manifest" "pv_efs_coastlines_data_jupyterhub" {
+  depends_on = [helm_release.aws_efs_csi_driver]
+
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "PersistentVolume"
+    metadata = {
+      name = "pv-efs-coastlines-data-jupyterhub"
+    }
+    spec = {
+      capacity = {
+        storage = "1Gi"
+      }
+      volumeMode                    = "Filesystem"
+      accessModes                   = ["ReadWriteMany"]
+      persistentVolumeReclaimPolicy = "Retain"
+      storageClassName              = ""
+      csi = {
+        driver       = "efs.csi.aws.com"
+        volumeHandle = "${var.efs_filesystem_id}::${var.efs_coastlines_access_point_id}"
+      }
+    }
+  })
+}
+
 resource "kubectl_manifest" "pvc_efs_coastline_data_jupyterhub" {
   depends_on = [
-    kubectl_manifest.efs_coastline_rw_storageclass,
+    kubectl_manifest.pv_efs_coastlines_data_jupyterhub,
     helm_release.aws_efs_csi_driver,
   ]
 
@@ -67,7 +92,8 @@ resource "kubectl_manifest" "pvc_efs_coastline_data_jupyterhub" {
     }
     spec = {
       accessModes      = ["ReadWriteMany"]
-      storageClassName = "efs-coastline-rw"
+      storageClassName = ""
+      volumeName       = "pv-efs-coastlines-data-jupyterhub"
       resources = {
         requests = {
           storage = "1Gi"
