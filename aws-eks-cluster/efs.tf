@@ -83,6 +83,28 @@ resource "aws_efs_mount_target" "data" {
 
 # Note: EFS access point removed - using existing fsap-0126d051fe0f291c3 in cluster-addons
 
+resource "aws_efs_access_point" "coastline_readonly" {
+  file_system_id = aws_efs_file_system.data.id
+
+  posix_user {
+    uid = 1000
+    gid = 2000
+  }
+
+  root_directory {
+    path = "/data/coastline"
+    creation_info {
+      owner_uid   = 1000
+      owner_gid   = 2000
+      permissions = "0770"
+    }
+  }
+
+  tags = merge(local.tags, {
+    Name = "${local.cluster}-efs-ap-coastline-readonly"
+  })
+}
+
 # --- Enable EFS Backup ---
 resource "aws_efs_backup_policy" "data" {
   file_system_id = aws_efs_file_system.data.id

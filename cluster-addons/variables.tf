@@ -8,6 +8,11 @@ variable "efs_filesystem_id" {
   type        = string
 }
 
+variable "efs_coastline_readonly_access_point_id" {
+  description = "EFS access point ID for read-only coastline mount used by argo-workflows"
+  type        = string
+}
+
 variable "efs_csi_irsa_role_arn" {
   description = "IAM role ARN for EFS CSI driver controller service account"
   type        = string
