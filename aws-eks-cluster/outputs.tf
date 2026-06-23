@@ -40,9 +40,9 @@ output "efs_filesystem_id" {
   value       = aws_efs_file_system.data.id
 }
 
-output "efs_coastline_readonly_access_point_id" {
-  description = "EFS access point ID for read-only coastline mount (used by argo-workflows)"
-  value       = aws_efs_access_point.coastline_readonly.id
+output "efs_coastlines_access_point_id" {
+  description = "EFS access point ID for the shared coastlines mount (used by argo-workflows and jupyterhub)"
+  value       = aws_efs_access_point.coastlines.id
 }
 
 output "efs_csi_irsa_role_arn" {

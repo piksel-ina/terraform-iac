@@ -243,12 +243,12 @@ module "karpenter" {
 module "cluster-addons" {
   source = "../cluster-addons"
 
-  cluster_name                           = local.cluster_name
-  efs_filesystem_id                      = module.eks-cluster.efs_filesystem_id
-  efs_coastline_readonly_access_point_id = module.eks-cluster.efs_coastline_readonly_access_point_id
-  efs_csi_irsa_role_arn                  = module.eks-cluster.efs_csi_irsa_role_arn
-  aws_region                             = var.aws_region
-  default_tags                           = var.default_tags
+  cluster_name                   = local.cluster_name
+  efs_filesystem_id              = module.eks-cluster.efs_filesystem_id
+  efs_coastlines_access_point_id = module.eks-cluster.efs_coastlines_access_point_id
+  efs_csi_irsa_role_arn          = module.eks-cluster.efs_csi_irsa_role_arn
+  aws_region                     = var.aws_region
+  default_tags                   = var.default_tags
 }
 
 module "codebuild" {

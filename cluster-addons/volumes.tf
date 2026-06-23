@@ -130,16 +130,16 @@ resource "kubectl_manifest" "pvc_efs_public_data_argo" {
   })
 }
 
-# --- EFS PersistentVolume for Argo coastline ---
+# --- EFS PersistentVolume for shared coastlines mount ---
 
-resource "kubectl_manifest" "pv_efs_coastline_data_argo" {
+resource "kubectl_manifest" "pv_efs_coastlines_data" {
   depends_on = [helm_release.aws_efs_csi_driver]
 
   yaml_body = yamlencode({
     apiVersion = "v1"
     kind       = "PersistentVolume"
     metadata = {
-      name = "pv-efs-coastline-data-argo"
+      name = "pv-efs-coastlines-data"
     }
     spec = {
       capacity = {
@@ -151,15 +151,15 @@ resource "kubectl_manifest" "pv_efs_coastline_data_argo" {
       storageClassName              = ""
       csi = {
         driver       = "efs.csi.aws.com"
-        volumeHandle = "${var.efs_filesystem_id}::${var.efs_coastline_readonly_access_point_id}"
+        volumeHandle = "${var.efs_filesystem_id}::${var.efs_coastlines_access_point_id}"
       }
     }
   })
 }
 
-resource "kubectl_manifest" "pvc_efs_coastline_data_argo" {
+resource "kubectl_manifest" "pvc_efs_coastlines_data_argo" {
   depends_on = [
-    kubectl_manifest.pv_efs_coastline_data_argo,
+    kubectl_manifest.pv_efs_coastlines_data,
     helm_release.aws_efs_csi_driver,
   ]
 
@@ -167,13 +167,13 @@ resource "kubectl_manifest" "pvc_efs_coastline_data_argo" {
     apiVersion = "v1"
     kind       = "PersistentVolumeClaim"
     metadata = {
-      name      = "efs-coastline-data"
+      name      = "efs-coastlines-data"
       namespace = "argo-workflows"
     }
     spec = {
       accessModes      = ["ReadWriteMany"]
       storageClassName = ""
-      volumeName       = "pv-efs-coastline-data-argo"
+      volumeName       = "pv-efs-coastlines-data"
       resources = {
         requests = {
           storage = "1Gi"
