@@ -376,7 +376,7 @@ resource "aws_cloudfront_distribution" "ows_cache" {
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 3600
     default_ttl            = 86400
-    max_ttl                = 604800
+    max_ttl                = 15552000
   }
 
   restrictions {
