@@ -48,12 +48,29 @@ resource "aws_s3_bucket_acl" "public" {
   acl    = "public-read"
 }
 
-resource "aws_s3_bucket_cors_configuration" "example" {
+resource "aws_s3_bucket_cors_configuration" "public" {
   bucket = aws_s3_bucket.public.id
   cors_rule {
-    allowed_methods = ["GET"]
+    allowed_methods = ["GET", "HEAD"]
     allowed_origins = ["*"]
+    allowed_headers = ["*"]
+    expose_headers = [
+      "Content-Length",
+      "Content-Range",
+      "Content-Encoding",
+      "Content-Type",
+      "ETag",
+      "Accept-Ranges",
+      "Last-Modified",
+      "Cache-Control",
+    ]
+    max_age_seconds = 3600
   }
+}
+
+moved {
+  from = aws_s3_bucket_cors_configuration.example
+  to   = aws_s3_bucket_cors_configuration.public
 }
 
 resource "aws_s3_bucket_policy" "public_read_policy" {
@@ -86,8 +103,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "public" {
   bucket = aws_s3_bucket.public.id
 
   rule {
-    id     = "expire-old-data"
+    id     = "hygiene-and-tiering"
     status = "Enabled"
+
+    filter {}
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
@@ -95,11 +114,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "public" {
 
     transition {
       days          = 60
-      storage_class = "ONEZONE_IA"
-    }
-
-    expiration {
-      days = var.lifecycle_expiration_days
+      storage_class = "INTELLIGENT_TIERING"
     }
   }
 }
