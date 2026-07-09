@@ -89,7 +89,7 @@ No requirements.
 
 | Name | Type |
 |------|------|
-| [aws_efs_access_point.coastline_readonly](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_access_point) | resource |
+| [aws_efs_access_point.coastlines](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_access_point) | resource |
 | [aws_efs_backup_policy.data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_backup_policy) | resource |
 | [aws_efs_file_system.data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_file_system) | resource |
 | [aws_efs_mount_target.data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_mount_target) | resource |
@@ -132,7 +132,7 @@ No requirements.
 | <a name="output_cluster_oidc_provider_arn"></a> [cluster\_oidc\_provider\_arn](#output\_cluster\_oidc\_provider\_arn) | EKS Cluster OIDC Provider ARN |
 | <a name="output_cluster_security_group_id"></a> [cluster\_security\_group\_id](#output\_cluster\_security\_group\_id) | Security group ID attached to the EKS cluster control plane ENIs |
 | <a name="output_cluster_tls_certificate_sha1_fingerprint"></a> [cluster\_tls\_certificate\_sha1\_fingerprint](#output\_cluster\_tls\_certificate\_sha1\_fingerprint) | EKS Cluster TLS Certificate SHA1 Fingerprint |
-| <a name="output_efs_coastline_readonly_access_point_id"></a> [efs\_coastline\_readonly\_access\_point\_id](#output\_efs\_coastline\_readonly\_access\_point\_id) | EFS access point ID for read-only coastline mount (used by argo-workflows) |
+| <a name="output_efs_coastlines_access_point_id"></a> [efs\_coastlines\_access\_point\_id](#output\_efs\_coastlines\_access\_point\_id) | EFS access point ID for the shared coastlines mount (used by argo-workflows and jupyterhub) |
 | <a name="output_efs_csi_irsa_role_arn"></a> [efs\_csi\_irsa\_role\_arn](#output\_efs\_csi\_irsa\_role\_arn) | IAM role ARN for EFS CSI driver controller service account |
 | <a name="output_efs_filesystem_id"></a> [efs\_filesystem\_id](#output\_efs\_filesystem\_id) | EFS filesystem ID for CSI driver and StorageClasses |
 | <a name="output_efs_security_group_id"></a> [efs\_security\_group\_id](#output\_efs\_security\_group\_id) | Security group ID of the EFS mount targets (for granting NFS access to in-VPC clients) |

@@ -18,10 +18,9 @@ module "networks" {
 module "s3_bucket" {
   source = "../aws-s3-bucket"
 
-  project                   = var.project
-  environment               = var.environment
-  default_tags              = var.default_tags
-  lifecycle_expiration_days = 365
+  project      = var.project
+  environment  = var.environment
+  default_tags = var.default_tags
 }
 
 module "website" {

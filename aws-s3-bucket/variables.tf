@@ -13,9 +13,3 @@ variable "default_tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "lifecycle_expiration_days" {
-  description = "Number of days before objects expire. Override per environment (e.g. staging=90)"
-  type        = number
-  default     = 365
-}
