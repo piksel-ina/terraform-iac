@@ -99,8 +99,16 @@ jobs:
                 { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 }
               );
 
-              const m = raw.match(/===TF_PLAN_SUMMARY_START===([\s\S]*?)===TF_PLAN_SUMMARY_END===/);
-              const summary = m ? m[1].trim() : '';
+              // CodeBuild echoes the whole post_build heredoc to CloudWatch before
+              // running it, so the marker literals appear twice. Take the last pair —
+              // the runtime output always comes after the echoed source.
+              const startTag = '===TF_PLAN_SUMMARY_START===';
+              const endTag = '===TF_PLAN_SUMMARY_END===';
+              const startIdx = raw.lastIndexOf(startTag);
+              const endIdx = raw.lastIndexOf(endTag);
+              const summary = (startIdx !== -1 && endIdx > startIdx)
+                ? raw.substring(startIdx + startTag.length, endIdx).trim()
+                : '';
 
               const buildNumber = `${{ steps.codebuild.outputs.build_number }}`;
               const buildUrl = `${{ steps.codebuild.outputs.build_url }}`;
