@@ -36,6 +36,7 @@ module "website" {
   domain_name    = "staging.piksel.big.go.id"
   hosted_zone_id = "Z00431943HAESMJJNQCQR"
   default_tags   = var.default_tags
+  csp_hashes     = local.website_csp_hashes
 }
 
 resource "aws_iam_openid_connect_provider" "github" {

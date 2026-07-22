@@ -38,3 +38,15 @@ variable "cloudfront_price_class" {
   type        = string
   default     = "PriceClass_100"
 }
+
+variable "csp_hashes" {
+  description = "Hashes of the inline scripts and styles the site is allowed to run. Regenerate from a build when the site's inline code changes."
+  type = object({
+    script = list(string)
+    style  = list(string)
+  })
+  default = {
+    script = []
+    style  = []
+  }
+}

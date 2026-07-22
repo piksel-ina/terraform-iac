@@ -1,3 +1,26 @@
+locals {
+  csp_script_src = concat(["'self'"], formatlist("'%s'", var.csp_hashes.script))
+
+  csp_style_src = concat(
+    ["'self'"],
+    length(var.csp_hashes.style) > 0 ? ["'unsafe-hashes'"] : [],
+    formatlist("'%s'", var.csp_hashes.style),
+    ["https://fonts.googleapis.com"],
+  )
+
+  content_security_policy = join("; ", [
+    "default-src 'self'",
+    "script-src ${join(" ", local.csp_script_src)}",
+    "style-src ${join(" ", local.csp_style_src)}",
+    "img-src 'self' data: blob:",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ])
+}
+
 resource "aws_s3_bucket" "this" {
   #checkov:skip=CKV2_AWS_62:No event notifications needed. No downstream consumers.
   #checkov:skip=CKV_AWS_144:No cross-region replication. Not urgent, future reconsider for production compliance.
@@ -279,7 +302,7 @@ resource "aws_cloudfront_response_headers_policy" "security" {
 
     content_security_policy {
       override                = true
-      content_security_policy = "default-src 'self'; script-src 'self' 'sha256-cwuLNOro1rKKV3tYMKUxJTCXwdmGh2ndC/hn1LmXyjQ=' 'sha256-0MUyFJhUwQbJbxdRddDw1q7CMNQ//leUWFbuI6XcmZo=' 'sha256-l75NlFdSAwyAIr8HS79hfv4NDLEpCvkAqGGjpbeKw2M='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+      content_security_policy = local.content_security_policy
     }
   }
 }
