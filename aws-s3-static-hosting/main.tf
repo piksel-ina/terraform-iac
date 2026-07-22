@@ -12,7 +12,7 @@ locals {
     "default-src 'self'",
     "script-src ${join(" ", local.csp_script_src)}",
     "style-src ${join(" ", local.csp_style_src)}",
-    "img-src 'self' data: blob:",
+    "img-src 'self' data: blob: https://images.unsplash.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "connect-src 'self'",
     "frame-ancestors 'none'",
@@ -126,6 +126,21 @@ resource "aws_cloudfront_function" "url_rewrite" {
   EOT
 }
 
+resource "aws_cloudfront_function" "security_headers" {
+  name    = "website-${lower(var.project)}-${lower(var.environment)}-csp"
+  runtime = "cloudfront-js-2.0"
+  comment = "Sets Content-Security-Policy on responses (value exceeds the response-headers-policy length limit)"
+  publish = true
+
+  code = <<-EOT
+    function handler(event) {
+      var response = event.response;
+      response.headers['content-security-policy'] = { value: "${local.content_security_policy}" };
+      return response;
+    }
+  EOT
+}
+
 resource "aws_acm_certificate" "this" {
   region            = "us-east-1"
   domain_name       = var.domain_name
@@ -202,6 +217,11 @@ resource "aws_cloudfront_distribution" "this" {
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.url_rewrite.arn
+    }
+
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.security_headers.arn
     }
   }
 
@@ -298,11 +318,6 @@ resource "aws_cloudfront_response_headers_policy" "security" {
       override   = true
       protection = true
       mode_block = true
-    }
-
-    content_security_policy {
-      override                = true
-      content_security_policy = local.content_security_policy
     }
   }
 }

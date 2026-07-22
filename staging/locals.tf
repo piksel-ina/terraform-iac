@@ -32,6 +32,11 @@ locals {
       "sha256-CKxPDFPrKIw2Ht2LdPlIQKnX2JLCPqqfLJvEfltalpY=",
       "sha256-vEnjl3fZTfqdoswyul3Do5nX1Dv6QnCJUKq7QXyWVN8=",
       "sha256-6Px4n3R6/N/JZ0Mksb8L/02vXYuCkSuF4M4+g55H9j8=",
+      "sha256-qOUXaVhMwjZmqqi5+W6pNR5QK3wCiUgqOEkYBZAaaG4=",
+      "sha256-+YWRMZ88jMyO7jVlBA52tZADiPobPIUA8LAWee68Fvs=",
+      "sha256-FI2V0tcYCmlxWCS2yvjBtDyaaZj1TbWYUMZ3W+/1CqY=",
+      "sha256-umDNa5+wEukAb2uOcsXGyk7fH4cAtGIdY/LxD4cAOWs=",
+      "sha256-oP0lUXNLVta8iZrBpndNfoYaLUqtOFUepmmF7cSSmKY=",
     ]
   }
 }
