@@ -24,6 +24,9 @@ AWS_PROFILE_STAGING    := $(STAGING_PROFILE)
 DEV_PROFILE := dev-piksel
 DEV_DIR     := dev
 
+PROD_PROFILE := prod-piksel
+PROD_DIR     := production
+
 # Directories
 SCRIPTS_DIR := scripts
 
@@ -54,6 +57,9 @@ help: ## Show this help message
 	@echo ''
 	@echo -e '$(BOLD)Dev$(NC)'
 	@grep -E '^[a-z]+-dev:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-22s\033[0m %s\n",$$1,$$2}'
+	@echo ''
+	@echo -e '$(BOLD)Production$(NC)'
+	@grep -E '^[a-z]+-production:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-22s\033[0m %s\n",$$1,$$2}'
 	@echo ''
 
 pre-commit: ## Run pre-commit hooks
@@ -115,6 +121,28 @@ output-dev: ## Terraform output
 
 show-dev: ## Terraform show
 	AWS_PROFILE=$(DEV_PROFILE) terraform -chdir=$(DEV_DIR) show
+
+# ============================================
+# PRODUCTION
+# ============================================
+
+init-production: ## Terraform init
+	AWS_PROFILE=$(PROD_PROFILE) terraform -chdir=$(PROD_DIR) init
+
+validate-production: ## Terraform validate
+	AWS_PROFILE=$(PROD_PROFILE) terraform -chdir=$(PROD_DIR) validate
+
+plan-production: ## Terraform plan
+	AWS_PROFILE=$(PROD_PROFILE) terraform -chdir=$(PROD_DIR) plan
+
+apply-production: ## Terraform apply
+	AWS_PROFILE=$(PROD_PROFILE) terraform -chdir=$(PROD_DIR) apply
+
+output-production: ## Terraform output
+	AWS_PROFILE=$(PROD_PROFILE) terraform -chdir=$(PROD_DIR) output
+
+show-production: ## Terraform show
+	AWS_PROFILE=$(PROD_PROFILE) terraform -chdir=$(PROD_DIR) show
 
 # ============================================
 # CLUSTER CHECKS (Staging only)
