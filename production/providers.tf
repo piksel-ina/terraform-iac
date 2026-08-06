@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket       = "piksel-production-tfstate"
+    bucket       = "piksel-production-iac-state"
     key          = "production/terraform.tfstate"
     region       = "ap-southeast-3"
     use_lockfile = true

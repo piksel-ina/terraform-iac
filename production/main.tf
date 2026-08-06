@@ -9,3 +9,15 @@ module "networks" {
   az_count     = 3
   default_tags = var.default_tags
 }
+
+module "buckets" {
+  source = "../modules/s3-bucket"
+
+  project               = var.project
+  environment           = var.environment
+  default_tags          = var.default_tags
+  create_iac_state      = true
+  create_public_data    = true
+  create_argo_artifacts = true
+  create_terria         = true
+}
