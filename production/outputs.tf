@@ -20,3 +20,20 @@ output "buckets" {
     terria         = { name = module.buckets.terria_bucket_name, arn = module.buckets.terria_bucket_arn }
   }
 }
+
+output "eks" {
+  description = "EKS cluster metadata"
+  value = {
+    cluster_name        = module.eks_cluster.cluster_name
+    cluster_endpoint    = module.eks_cluster.cluster_endpoint
+    cluster_oidc_issuer = module.eks_cluster.cluster_oidc_issuer_url
+  }
+}
+
+output "efs" {
+  description = "EFS metadata"
+  value = {
+    filesystem_id     = module.efs.filesystem_id
+    security_group_id = module.efs.security_group_id
+  }
+}
