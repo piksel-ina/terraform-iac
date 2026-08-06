@@ -8,7 +8,7 @@ Terraform IaC for the Piksel project on AWS (`ap-southeast-3`). Multiple indepen
 |---|---|---|---|
 | `staging/` | `staging-piksel` | **CodeBuild** (triggered by `.github/workflows/deploy.yml`; projects `piksel-tf-plan` / `piksel-tf-apply`) | S3 `piksel-staging-tfstate` (versioned, locked) |
 | `dev/` | `dev-piksel` | `make apply-dev` locally | local `dev/terraform.tfstate`; back up with `make backup-dev` |
-| `bootstrap/` | per-account | `terraform apply` locally, per workspace | local, committed under `bootstrap/terraform.tfstate.d/` |
+| `bootstrap/` | per-account | `terraform apply` locally, per workspace | local, **not** in git — solo-admin, will move to remote later |
 | `secrets-management/` | per-account | `terraform apply` locally, per workspace | local, **not** in git (known gap) |
 
 Shared modules (`networks/`, `aws-eks-cluster/`, `aws-database/`, `karpenter/`, `applications/`, `external-dns/`, `aws-s3-bucket/`, `aws-s3-static-hosting/`, `cluster-addons/`, `codebuild/`) are consumed by `staging/main.tf` via `source = "../<module>"`. Moving or renaming a module dir breaks those paths.

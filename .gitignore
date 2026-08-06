@@ -8,11 +8,6 @@ secrets-management/*.tfplan
 *.tfstate
 *.tfstate.*
 
-# EXCEPTION: bootstrap state is local and committed (one S3 bucket, rarely changes)
-!bootstrap/terraform.tfstate.d/
-!bootstrap/terraform.tfstate.d/**/*.tfstate
-!bootstrap/terraform.tfstate.d/**/*.tfstate.*
-
 # log files
 *.log
 
