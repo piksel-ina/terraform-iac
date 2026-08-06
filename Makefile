@@ -85,9 +85,6 @@ plan-staging: ## Terraform plan
 apply-staging: ## Terraform apply
 	AWS_PROFILE=$(STAGING_PROFILE) terraform -chdir=$(STAGING_DIR) apply
 
-backup-staging: ## Backup state to S3
-	cd ./$(STAGING_DIR) && bash backup.sh run && cd ..
-
 output-staging: ## Terraform output
 	AWS_PROFILE=$(STAGING_PROFILE) terraform -chdir=$(STAGING_DIR) output
 
