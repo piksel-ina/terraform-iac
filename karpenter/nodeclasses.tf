@@ -590,6 +590,7 @@ resource "kubectl_manifest" "karpenter_node_class_data_production" {
           ebs:
             volumeSize: 30Gi
             volumeType: gp3
+            encrypted: true
             deleteOnTermination: true
       subnetSelectorTerms:
         - tags:
@@ -675,24 +676,4 @@ resource "kubectl_manifest" "karpenter_node_pool_data_production" {
   YAML
 
   depends_on = [kubectl_manifest.karpenter_node_class_data_production]
-}
-
-moved {
-  from = kubectl_manifest.karpenter_node_pool_data_production_r_4xlarge
-  to   = kubectl_manifest.karpenter_node_pool_data_production["r4xlarge"]
-}
-
-moved {
-  from = kubectl_manifest.karpenter_node_pool_data_production_r_8xlarge
-  to   = kubectl_manifest.karpenter_node_pool_data_production["r8xlarge"]
-}
-
-moved {
-  from = kubectl_manifest.karpenter_node_pool_data_production_r_12xlarge
-  to   = kubectl_manifest.karpenter_node_pool_data_production["r12xlarge"]
-}
-
-moved {
-  from = kubectl_manifest.karpenter_node_pool_data_production_r_16xlarge
-  to   = kubectl_manifest.karpenter_node_pool_data_production["r16xlarge"]
 }
