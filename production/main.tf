@@ -59,3 +59,21 @@ module "karpenter" {
   cluster_endpoint = module.eks_cluster.cluster_endpoint
   default_tags     = var.default_tags
 }
+
+module "cluster_addons" {
+  source = "../modules/cluster-addons"
+
+  cluster_name = module.eks_cluster.cluster_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  external_dns_target_role_arn = "arn:aws:iam::686410905891:role/externaldns-pod-identity-target-role-production"
+  external_dns_domain_filters  = ["piksel.big.go.id"]
+  external_dns_zone_id_filters = ["Z08561162REF6LC5AY0UM"]
+
+  acme_email = "piksel@big.go.id"
+
+  default_tags = var.default_tags
+
+  depends_on = [module.karpenter]
+}
