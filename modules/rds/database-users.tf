@@ -109,13 +109,6 @@ resource "postgresql_role" "app_users" {
   depends_on = [module.db]
 }
 
-resource "postgresql_grant_role" "odc_manage" {
-  role       = "odc"
-  grant_role = "odc_manage"
-
-  depends_on = [postgresql_role.app_users]
-}
-
 resource "postgresql_grant" "database_connect" {
   for_each = local.app_users
 
@@ -220,6 +213,8 @@ resource "postgresql_default_privileges" "full_table_defaults" {
   owner       = each.key
   object_type = "table"
   privileges  = ["SELECT", "INSERT", "UPDATE", "DELETE"]
+
+  depends_on = [postgresql_database.app_databases, postgresql_role.app_users]
 }
 
 resource "postgresql_default_privileges" "full_sequence_defaults" {
@@ -231,6 +226,8 @@ resource "postgresql_default_privileges" "full_sequence_defaults" {
   owner       = each.key
   object_type = "sequence"
   privileges  = ["USAGE", "SELECT"]
+
+  depends_on = [postgresql_database.app_databases, postgresql_role.app_users]
 }
 
 resource "postgresql_default_privileges" "readonly_table_defaults" {
@@ -242,6 +239,8 @@ resource "postgresql_default_privileges" "readonly_table_defaults" {
   owner       = each.key
   object_type = "table"
   privileges  = ["SELECT"]
+
+  depends_on = [postgresql_database.app_databases, postgresql_role.app_users]
 }
 
 resource "postgresql_default_privileges" "readonly_sequence_defaults" {
@@ -253,6 +252,8 @@ resource "postgresql_default_privileges" "readonly_sequence_defaults" {
   owner       = each.key
   object_type = "sequence"
   privileges  = ["USAGE", "SELECT"]
+
+  depends_on = [postgresql_database.app_databases, postgresql_role.app_users]
 }
 
 resource "postgresql_default_privileges" "grafana_table_defaults" {
@@ -264,6 +265,8 @@ resource "postgresql_default_privileges" "grafana_table_defaults" {
   owner       = each.key
   object_type = "table"
   privileges  = ["SELECT"]
+
+  depends_on = [postgresql_database.app_databases, postgresql_role.app_users]
 }
 
 resource "postgresql_default_privileges" "grafana_sequence_defaults" {
@@ -275,4 +278,6 @@ resource "postgresql_default_privileges" "grafana_sequence_defaults" {
   owner       = each.key
   object_type = "sequence"
   privileges  = ["USAGE", "SELECT"]
+
+  depends_on = [postgresql_database.app_databases, postgresql_role.app_users]
 }
