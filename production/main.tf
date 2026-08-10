@@ -77,3 +77,19 @@ module "cluster_addons" {
 
   depends_on = [module.karpenter]
 }
+
+module "rds" {
+  source = "../modules/rds"
+
+  project             = var.project
+  environment         = var.environment
+  cluster_name        = module.eks_cluster.cluster_name
+  vpc_id              = module.networks.vpc_id
+  vpc_cidr_block      = module.networks.vpc_cidr_block
+  private_subnets_ids = module.networks.private_subnets
+
+  pg_host = var.pg_host
+  pg_port = var.pg_port
+
+  default_tags = var.default_tags
+}

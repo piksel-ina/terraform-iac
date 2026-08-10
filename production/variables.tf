@@ -26,3 +26,15 @@ variable "default_tags" {
     "Environment" = "Production"
   }
 }
+
+variable "pg_host" {
+  description = "Override PostgreSQL host for the terraform-managed database resources. Set to 'localhost' when tunnelling via SSM/port-forward on first apply."
+  type        = string
+  default     = ""
+}
+
+variable "pg_port" {
+  description = "PostgreSQL port for the terraform-managed database resources. Use the local port when tunnelling."
+  type        = number
+  default     = 5432
+}
