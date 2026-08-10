@@ -51,3 +51,11 @@ module "efs" {
   backup_enabled         = false
   default_tags           = var.default_tags
 }
+
+module "karpenter" {
+  source = "../modules/karpenter"
+
+  cluster_name     = module.eks_cluster.cluster_name
+  cluster_endpoint = module.eks_cluster.cluster_endpoint
+  default_tags     = var.default_tags
+}

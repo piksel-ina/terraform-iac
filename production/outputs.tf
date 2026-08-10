@@ -37,3 +37,12 @@ output "efs" {
     security_group_id = module.efs.security_group_id
   }
 }
+
+output "karpenter" {
+  description = "Karpenter metadata"
+  value = {
+    controller_iam_role_arn = module.karpenter.controller_iam_role_arn
+    node_iam_role_name      = module.karpenter.node_iam_role_name
+    interruption_queue_name = module.karpenter.interruption_queue_name
+  }
+}
