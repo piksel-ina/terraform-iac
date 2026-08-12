@@ -93,3 +93,39 @@ module "rds" {
 
   default_tags = var.default_tags
 }
+
+module "applications" {
+  source = "../modules/applications"
+
+  providers = {
+    aws.virginia      = aws.virginia
+    aws.cross_account = aws.cross_account
+  }
+
+  project      = var.project
+  environment  = var.environment
+  aws_region   = var.aws_region
+  default_tags = var.default_tags
+
+  account_id   = module.networks.account_id
+  cluster_name = module.eks_cluster.cluster_name
+
+  subdomains                           = local.subdomains
+  public_hosted_zone_id                = local.public_hosted_zone_id
+  cognito_auth_domain                  = local.cognito_auth_domain
+  odc_cloudfront_crossaccount_role_arn = local.odc_cloudfront_crossaccount_role_arn
+
+  internal_buckets           = [module.buckets.public_data_bucket_name]
+  read_external_buckets      = local.read_external_buckets
+  public_bucket_arn          = module.buckets.public_data_bucket_arn
+  argo_artifacts_bucket_name = module.buckets.argo_artifacts_bucket_name
+  terria_bucket_name         = module.buckets.terria_bucket_name
+
+  db_namespace      = module.rds.db_namespace
+  db_address        = module.rds.db_address
+  k8s_db_service    = module.rds.k8s_db_service
+  db_user_passwords = module.rds.user_passwords
+
+  waf_log_retention_days = 365
+  enable_grafana         = true
+}
