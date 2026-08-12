@@ -1,0 +1,29 @@
+grafana:
+  grafana.ini:
+    server:
+      root_url: https://${grafana_subdomain}
+    auth.generic_oauth:
+      name: Cognito
+      enabled: true
+      allow_sign_up: true
+      scopes: openid email profile
+      auth_url: https://${cognito_auth_domain}/oauth2/authorize
+      token_url: https://${cognito_auth_domain}/oauth2/token
+      api_url: https://${cognito_auth_domain}/oauth2/userInfo
+      use_pkce: true
+      use_refresh_token: true
+      email_attribute_path: email
+      groups_attribute_path: cognito:groups
+      role_attribute_path: ("cognito:groups" | contains([*], 'admin') && 'Admin' || 'Viewer')
+      role_attribute_strict: true
+      allow_assign_grafana_admin: true
+      auto_login: true
+  envValueFrom:
+    GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
+      secretKeyRef:
+        name: grafana-oauth-secret
+        key: client_id
+    GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+      secretKeyRef:
+        name: grafana-oauth-secret
+        key: client_secret

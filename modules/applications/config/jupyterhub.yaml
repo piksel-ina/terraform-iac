@@ -1,0 +1,41 @@
+hub:
+  db:
+    type: postgres
+    upgrade: true
+    password: ${jhub_db_password}
+  config:
+    GenericOAuthenticator:
+      allow_all: true
+      auto_login: true
+      enable_auth_state: true
+      auth_refresh_age: 300
+      refresh_pre_spawn: true
+      userdata_from_id_token: true
+      client_id: ${jhub_auth_client_id}
+      client_secret: ${jhub_auth_client_secret}
+      authorize_url: https://${cognito_auth_domain}/oauth2/authorize
+      token_url: https://${cognito_auth_domain}/oauth2/token
+      logout_redirect_url: https://${cognito_auth_domain}/logout?client_id=${jhub_auth_client_id}&logout_uri=https://${host_name}/
+      login_service: "AWS Cognito"
+      username_claim: email
+      scope:
+        - openid
+        - email
+        - profile
+        - aws.cognito.signin.user.admin
+      admin_users:
+        - muhammad.taufik@big.go.id
+    JupyterHub:
+      authenticator_class: generic-oauth
+  services:
+    dask-gateway:
+      apiToken: ${jhub_dask_gateway_api_token}
+  cookieSecret: ${jhub_hub_cookie_secret_token}
+
+proxy:
+  secretToken: ${jhub_proxy_secret_token}
+
+singleuser:
+  extraEnv:
+    AWS_DEFAULT_REGION: ${region}
+    ODC_DEFAULT_DB_PASSWORD: ${odcread_password}

@@ -35,6 +35,19 @@ provider "aws" {
   region = var.aws_region
 }
 
+provider "aws" {
+  region = "us-east-1"
+  alias  = "virginia"
+}
+
+provider "aws" {
+  region = var.aws_region
+  alias  = "cross_account"
+  assume_role {
+    role_arn = local.odc_cloudfront_crossaccount_role_arn
+  }
+}
+
 provider "kubernetes" {
   host                   = module.eks_cluster.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks_cluster.cluster_certificate_authority_data)
