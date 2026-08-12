@@ -16,5 +16,6 @@ locals {
     "usgs-landsat",
     "copernicus-dem-30m",
     "e84-earth-search-sentinel-data",
+    "piksel-staging-public-data",
   ]
 }
