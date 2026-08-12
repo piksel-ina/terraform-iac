@@ -1,0 +1,186 @@
+name: Terraform Deploy (Production)
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['**.tf', '**.tfvars']
+  push:
+    branches: [main]
+    paths: ['**.tf', '**.tfvars']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+env:
+  AWS_REGION: "ap-southeast-3"
+  PLAN_PROJECT: "Piksel-tf-plan"
+  APPLY_PROJECT: "Piksel-tf-apply"
+
+jobs:
+  plan:
+    name: Terraform Plan (Production)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::522783511350:role/piksel-tf-deploy-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Trigger CodeBuild plan
+        id: codebuild
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BRANCH: ${{ github.head_ref }}
+        run: |
+          BUILD_ID=$(aws codebuild start-build \
+            --project-name "$PLAN_PROJECT" \
+            --environment-variables-override \
+              name=TF_ACTION,value=plan \
+              name=PR_NUMBER,value="$PR_NUMBER" \
+              name=PR_BRANCH,value="$PR_BRANCH" \
+              name=BRANCH,value= \
+            --query 'build.id' \
+            --output text)
+          BUILD_NUMBER=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+            --query 'builds[0].buildNumber' --output text)
+          BUILD_URL="https://${AWS_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${PLAN_PROJECT}/build/${PLAN_PROJECT}%3A${BUILD_NUMBER}"
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "build_url=$BUILD_URL" >> "$GITHUB_OUTPUT"
+          echo "::notice::CodeBuild #$BUILD_NUMBER started — $BUILD_URL"
+
+          echo "Waiting for CodeBuild #$BUILD_NUMBER..."
+          while true; do
+            STATUS=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+              --query 'builds[0].buildStatus' --output text)
+            echo "Status: $STATUS"
+            if [ "$STATUS" != "IN_PROGRESS" ]; then break; fi
+            sleep 15
+          done
+
+          if [ "$STATUS" != "SUCCEEDED" ]; then
+            echo "::error::CodeBuild failed with status $STATUS — $BUILD_URL"
+            exit 1
+          fi
+
+      - name: Fetch and post plan output
+        if: always() && steps.codebuild.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const buildId = `${{ steps.codebuild.outputs.build_id }}`;
+
+            try {
+              const logs = JSON.parse(execSync(
+                `aws codebuild batch-get-builds --ids "${buildId}" ` +
+                `--query 'builds[0].logs.{group:groupName,stream:streamName}' --output json`,
+                { encoding: 'utf8' }
+              ));
+
+              if (!logs.group || !logs.stream) {
+                console.log('No CloudWatch log info on the build');
+                return;
+              }
+
+              // --no-start-from-head: the summary markers are at the tail of the log.
+              const raw = execSync(
+                `aws logs get-log-events ` +
+                `--log-group-name "${logs.group}" --log-stream-name "${logs.stream}" ` +
+                `--limit 10000 --no-start-from-head ` +
+                `--query 'events[].message' --output text`,
+                { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 }
+              );
+
+              // CodeBuild echoes the whole post_build heredoc to CloudWatch before
+              // running it, so the marker literals appear twice. Take the last pair —
+              // the runtime output always comes after the echoed source.
+              const startTag = '===TF_PLAN_SUMMARY_START===';
+              const endTag = '===TF_PLAN_SUMMARY_END===';
+              const startIdx = raw.lastIndexOf(startTag);
+              const endIdx = raw.lastIndexOf(endTag);
+              const summary = (startIdx !== -1 && endIdx > startIdx)
+                ? raw.substring(startIdx + startTag.length, endIdx).trim()
+                : '';
+
+              const buildNumber = `${{ steps.codebuild.outputs.build_number }}`;
+              const buildUrl = `${{ steps.codebuild.outputs.build_url }}`;
+
+              const summaryBlock = summary
+                ? `\`\`\`diff\n${summary.substring(0, 60000)}\n\`\`\``
+                : '_No changes._';
+
+              const body = [
+                '## Terraform Plan (Production)',
+                '',
+                `> **CodeBuild #${buildNumber}** — [View full plan in AWS Console](${buildUrl})`,
+                '',
+                '### Change summary',
+                summaryBlock,
+                '',
+                '<sub>Full plan output is in the CodeBuild build log (link above).</sub>',
+              ].join('\n');
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            } catch (e) {
+              console.log('Failed to fetch plan summary:', e.message);
+            }
+
+  apply:
+    name: Terraform Apply (Production)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::522783511350:role/piksel-tf-deploy-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Trigger CodeBuild apply
+        id: codebuild
+        run: |
+          BUILD_ID=$(aws codebuild start-build \
+            --project-name "$APPLY_PROJECT" \
+            --environment-variables-override \
+              name=TF_ACTION,value=apply \
+              name=PR_NUMBER,value= \
+              name=PR_BRANCH,value= \
+              name=BRANCH,value=${{ github.ref_name }} \
+            --query 'build.id' \
+            --output text)
+          BUILD_NUMBER=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+            --query 'builds[0].buildNumber' --output text)
+          BUILD_URL="https://${AWS_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${APPLY_PROJECT}/build/${APPLY_PROJECT}%3A${BUILD_NUMBER}"
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "build_url=$BUILD_URL" >> "$GITHUB_OUTPUT"
+          echo "::notice::CodeBuild #$BUILD_NUMBER started — $BUILD_URL"
+
+          echo "Waiting for CodeBuild #$BUILD_NUMBER..."
+          while true; do
+            STATUS=$(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+              --query 'builds[0].buildStatus' --output text)
+            echo "Status: $STATUS"
+            if [ "$STATUS" != "IN_PROGRESS" ]; then break; fi
+            sleep 15
+          done
+
+          if [ "$STATUS" != "SUCCEEDED" ]; then
+            echo "::error::CodeBuild failed with status $STATUS — $BUILD_URL"
+            exit 1
+          fi

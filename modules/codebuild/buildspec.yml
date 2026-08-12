@@ -1,0 +1,61 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing Terraform ${TF_VERSION}"
+      - curl -fsSL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip" -o terraform.zip
+      - unzip terraform.zip -d /usr/local/bin
+      - rm terraform.zip
+      - terraform version
+
+  pre_build:
+    commands:
+      - echo "Cloning repository"
+      - git clone "$GITHUB_REPO" /tmp/repo
+      - cd /tmp/repo
+      - |
+        if [ -n "$PR_BRANCH" ]; then
+          git fetch origin "pull/${PR_NUMBER}/head"
+          git checkout FETCH_HEAD
+        elif [ -n "$BRANCH" ]; then
+          git checkout "$BRANCH"
+        fi
+
+  build:
+    commands:
+      - cd /tmp/repo
+      - |
+        for i in 1 2 3; do
+          echo "terraform init attempt $i"
+          if terraform -chdir="$TF_DIR" init; then break; fi
+          if [ "$i" -eq 3 ]; then exit 1; fi
+          echo "init failed, retrying in 10s..."
+          sleep 10
+        done
+      - |
+        if [ "$TF_ACTION" = "plan" ]; then
+          terraform -chdir="$TF_DIR" plan -no-color 2>&1 | tee /tmp/plan_output.txt
+          exit "${PIPESTATUS[0]}"
+        elif [ "$TF_ACTION" = "apply" ]; then
+          terraform -chdir="$TF_DIR" apply -auto-approve -no-color
+        fi
+
+  post_build:
+    commands:
+      - |
+        # Markers are the contract with the deploy workflow, which extracts the
+        # summary between them from CloudWatch and posts it to the PR.
+        if [ "$TF_ACTION" = "plan" ] && [ -f /tmp/plan_output.txt ]; then
+          echo "===TF_PLAN_SUMMARY_START==="
+          grep -E '^  # .* (will be|must be) ' /tmp/plan_output.txt | sed -E '
+            s|^  # (.*) will be created$|+ \1  (create)|;
+            s|^  # (.*) will be destroyed$|- \1  (destroy)|;
+            s|^  # (.*) will be updated in-place$|~ \1  (update)|;
+            s|^  # (.*) must be replaced$|-/+ \1  (replace)|;
+            s|^  # (.*) will be read during apply$|  \1  (read)|;
+          ' || true
+          echo
+          grep -E '^(Plan:|No changes\.|Error:)' /tmp/plan_output.txt || true
+          echo "===TF_PLAN_SUMMARY_END==="
+        fi
