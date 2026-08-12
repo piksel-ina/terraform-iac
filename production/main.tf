@@ -38,6 +38,12 @@ module "eks_cluster" {
 
   sso_admin_role_arn = "arn:aws:iam::522783511350:role/aws-reserved/sso.amazonaws.com/ap-southeast-3/AWSReservedSSO_AdministratorAccess_bec8d2bbd660c382"
 
+  additional_access_entries = {
+    codebuild = {
+      principal_arn = module.codebuild.codebuild_role_arn
+    }
+  }
+
   default_tags = var.default_tags
 }
 
@@ -128,4 +134,97 @@ module "applications" {
 
   waf_log_retention_days = 365
   enable_grafana         = true
+}
+
+module "codebuild" {
+  source = "../modules/codebuild"
+
+  project             = var.project
+  environment         = var.environment
+  aws_region          = var.aws_region
+  account_id          = module.networks.account_id
+  vpc_id              = module.networks.vpc_id
+  vpc_cidr_block      = module.networks.vpc_cidr_block
+  private_subnet_ids  = module.networks.private_subnets
+  tf_state_bucket_arn = "arn:aws:s3:::piksel-production-iac-state"
+  default_tags        = var.default_tags
+}
+
+# Allow the CodeBuild projects to reach the EKS API for kubernetes/helm providers.
+resource "aws_security_group_rule" "codebuild_to_eks_api" {
+  description              = "Allow CodeBuild to reach EKS control plane API"
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  source_security_group_id = module.codebuild.codebuild_security_group_id
+  security_group_id        = module.eks_cluster.cluster_security_group_id
+}
+
+# --- GitHub Actions OIDC for the Terraform deploy pipeline ---
+resource "aws_iam_openid_connect_provider" "github" {
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+
+  tags = merge(var.default_tags, { ManagedBy = "Terraform" })
+}
+
+resource "aws_iam_role" "github_tf_deploy" {
+  name = "piksel-tf-deploy-github-actions"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+        }
+        StringLike = {
+          "token.actions.githubusercontent.com:sub" = "repo:piksel-ina/terraform-iac:*"
+        }
+      }
+    }]
+  })
+
+  tags = merge(var.default_tags, { ManagedBy = "Terraform" })
+}
+
+resource "aws_iam_policy" "github_tf_deploy" {
+  name = "piksel-tf-deploy-github-actions-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "codebuild:StartBuild",
+          "codebuild:BatchGetBuilds"
+        ]
+        Resource = [
+          module.codebuild.plan_project_arn,
+          module.codebuild.apply_project_arn
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = ["logs:GetLogEvents"]
+        Resource = [
+          module.codebuild.plan_log_group_arn,
+          module.codebuild.apply_log_group_arn
+        ]
+      }
+    ]
+  })
+
+  tags = merge(var.default_tags, { ManagedBy = "Terraform" })
+}
+
+resource "aws_iam_role_policy_attachment" "github_tf_deploy" {
+  role       = aws_iam_role.github_tf_deploy.name
+  policy_arn = aws_iam_policy.github_tf_deploy.arn
 }
