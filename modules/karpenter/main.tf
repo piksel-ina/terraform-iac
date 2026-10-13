@@ -1,6 +1,6 @@
 module "controller" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "~> 21.24"
+  version = "21.24.2"
 
   cluster_name = var.cluster_name
 
