@@ -239,10 +239,14 @@ resource "aws_cloudfront_distribution" "this" {
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
-  custom_error_response {
-    error_code         = 404
-    response_code      = 404
-    response_page_path = "/index.html"
+  dynamic "custom_error_response" {
+    for_each = var.custom_error_responses
+
+    content {
+      error_code         = custom_error_response.value.error_code
+      response_code      = custom_error_response.value.response_code
+      response_page_path = custom_error_response.value.response_page_path
+    }
   }
 
   restrictions {
@@ -264,9 +268,11 @@ resource "aws_cloudfront_distribution" "this" {
 
 resource "aws_route53_record" "this" {
   provider = aws.dns
-  zone_id  = var.hosted_zone_id
-  name     = var.domain_name
-  type     = "A"
+  count    = var.create_dns_records ? 1 : 0
+
+  zone_id = var.hosted_zone_id
+  name    = var.domain_name
+  type    = "A"
 
   alias {
     name                   = aws_cloudfront_distribution.this.domain_name
@@ -277,9 +283,11 @@ resource "aws_route53_record" "this" {
 
 resource "aws_route53_record" "this_ipv6" {
   provider = aws.dns
-  zone_id  = var.hosted_zone_id
-  name     = var.domain_name
-  type     = "AAAA"
+  count    = var.create_dns_records ? 1 : 0
+
+  zone_id = var.hosted_zone_id
+  name    = var.domain_name
+  type    = "AAAA"
 
   alias {
     name                   = aws_cloudfront_distribution.this.domain_name

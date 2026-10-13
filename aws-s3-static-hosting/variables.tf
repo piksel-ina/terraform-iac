@@ -1,10 +1,33 @@
 terraform {
   required_providers {
     aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.0"
+      source                = "hashicorp/aws"
+      version               = ">= 5.0"
+      configuration_aliases = [aws.dns]
     }
   }
+}
+
+variable "create_dns_records" {
+  description = "Whether to create A and AAAA aliases for the website domain"
+  type        = bool
+  default     = true
+}
+
+variable "custom_error_responses" {
+  description = "CloudFront origin errors mapped to static response pages"
+  type = list(object({
+    error_code         = number
+    response_code      = number
+    response_page_path = string
+  }))
+  default = [
+    {
+      error_code         = 404
+      response_code      = 404
+      response_page_path = "/index.html"
+    }
+  ]
 }
 
 variable "project" {

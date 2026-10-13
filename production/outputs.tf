@@ -46,3 +46,14 @@ output "karpenter" {
     interruption_queue_name = module.karpenter.interruption_queue_name
   }
 }
+
+output "website" {
+  description = "Production static website hosting metadata"
+  value = {
+    bucket_name                = module.website.bucket_name
+    cloudfront_distribution_id = module.website.cloudfront_distribution_id
+    cloudfront_domain_name     = module.website.cloudfront_domain_name
+    website_url                = module.website.website_url
+    deploy_role_arn            = aws_iam_role.github_website_deploy.arn
+  }
+}

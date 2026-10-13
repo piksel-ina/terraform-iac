@@ -228,3 +228,91 @@ resource "aws_iam_role_policy_attachment" "github_tf_deploy" {
   role       = aws_iam_role.github_tf_deploy.name
   policy_arn = aws_iam_policy.github_tf_deploy.arn
 }
+
+module "website" {
+  source = "../aws-s3-static-hosting"
+
+  providers = {
+    aws     = aws
+    aws.dns = aws.cross_account
+  }
+
+  project            = var.project
+  environment        = var.environment
+  domain_name        = "piksel.big.go.id"
+  hosted_zone_id     = local.public_hosted_zone_id
+  default_tags       = var.default_tags
+  csp_hashes         = local.website_csp_hashes
+  create_dns_records = false
+  custom_error_responses = [
+    {
+      error_code         = 403
+      response_code      = 404
+      response_page_path = "/404.html"
+    },
+    {
+      error_code         = 404
+      response_code      = 404
+      response_page_path = "/404.html"
+    }
+  ]
+}
+
+resource "aws_iam_role" "github_website_deploy" {
+  name = "piksel-website-deploy-github-actions"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+        }
+        StringLike = {
+          "token.actions.githubusercontent.com:sub" = "repo:piksel-ina/main-website:*"
+        }
+      }
+    }]
+  })
+
+  tags = merge(var.default_tags, { ManagedBy = "Terraform" })
+}
+
+resource "aws_iam_policy" "github_website_deploy" {
+  name = "piksel-website-deploy-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = [module.website.bucket_arn]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Resource = ["${module.website.bucket_arn}/*"]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["cloudfront:CreateInvalidation"]
+        Resource = ["arn:aws:cloudfront::522783511350:distribution/${module.website.cloudfront_distribution_id}"]
+      }
+    ]
+  })
+
+  tags = merge(var.default_tags, { ManagedBy = "Terraform" })
+}
+
+resource "aws_iam_role_policy_attachment" "github_website_deploy" {
+  role       = aws_iam_role.github_website_deploy.name
+  policy_arn = aws_iam_policy.github_website_deploy.arn
+}
