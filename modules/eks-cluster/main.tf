@@ -25,9 +25,9 @@ locals {
       name           = "system-on-demand"
       capacity_type  = "ON_DEMAND"
       instance_types = [var.system_node_instance_types.on_demand]
-      min_size       = 1
-      max_size       = 2
-      desired_size   = 1
+      min_size       = 2
+      max_size       = 3
+      desired_size   = 2
     })
     spot = merge(local.system_node_common, {
       name           = "system-spot"
