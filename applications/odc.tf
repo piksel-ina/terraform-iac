@@ -315,6 +315,23 @@ resource "aws_wafv2_web_acl_logging_configuration" "ows_cache" {
   resource_arn            = aws_wafv2_web_acl.ows_cache.arn
 }
 
+# --- Shared secret proving a request to ows-uncached came through CloudFront ---
+resource "random_password" "ows_origin" {
+  length  = 48
+  special = false
+}
+
+resource "kubernetes_secret" "ows_origin_auth" {
+  metadata {
+    name      = "ows-origin-auth"
+    namespace = kubernetes_namespace.odc.metadata[0].name
+  }
+  data = {
+    auth = "cloudfront:{PLAIN}${random_password.ows_origin.result}"
+  }
+  type = "Opaque"
+}
+
 # --- Create a CloudFront distribution, to cache the OWS endpoint ---
 # This distribution will use the custom certificate and the cross-account role to access the OWS endpoint.
 resource "aws_cloudfront_distribution" "ows_cache" {
@@ -342,6 +359,11 @@ resource "aws_cloudfront_distribution" "ows_cache" {
     custom_header {
       name  = "X-Public-Host"
       value = "ows.${local.subdomain}"
+    }
+
+    custom_header {
+      name  = "Authorization"
+      value = "Basic ${base64encode("cloudfront:${random_password.ows_origin.result}")}"
     }
   }
 
