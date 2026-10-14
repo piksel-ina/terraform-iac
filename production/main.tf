@@ -270,9 +270,7 @@ resource "aws_iam_role" "github_website_deploy" {
       Condition = {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-        }
-        StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:piksel-ina/main-website:*"
+          "token.actions.githubusercontent.com:sub" = "repo:piksel-ina/main-website:ref:refs/heads/main"
         }
       }
     }]
