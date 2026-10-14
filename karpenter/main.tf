@@ -17,7 +17,7 @@ locals {
 # --- Karpenter (magic autoscaler) ---
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "~> 21.0"
+  version = "21.24.0"
 
   cluster_name         = local.cluster
   namespace            = "karpenter"
