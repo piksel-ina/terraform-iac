@@ -38,6 +38,23 @@ resource "kubernetes_secret" "odc_namespace_secret" {
   type = "Opaque"
 }
 
+# --- Shared secret proving a request to ows-uncached came through CloudFront ---
+resource "random_password" "ows_origin" {
+  length  = 48
+  special = false
+}
+
+resource "kubernetes_secret" "ows_origin_auth" {
+  metadata {
+    name      = "ows-origin-auth"
+    namespace = kubernetes_namespace.odc.metadata[0].name
+  }
+  data = {
+    auth = "cloudfront:{PLAIN}${random_password.ows_origin.result}"
+  }
+  type = "Opaque"
+}
+
 # --- Read-only S3 policy for the ODC data reader ---
 resource "aws_iam_policy" "odc_read" {
   name        = "svc-${local.sa_odc_read}-read-policy"
@@ -312,6 +329,11 @@ resource "aws_cloudfront_distribution" "ows_cache" {
     custom_header {
       name  = "X-Public-Host"
       value = "ows.${local.subdomain}"
+    }
+
+    custom_header {
+      name  = "Authorization"
+      value = "Basic ${base64encode("cloudfront:${random_password.ows_origin.result}")}"
     }
   }
 
