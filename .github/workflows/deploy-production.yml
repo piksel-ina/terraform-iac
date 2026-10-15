@@ -30,7 +30,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::522783511350:role/piksel-tf-deploy-github-actions
+          role-to-assume: arn:aws:iam::522783511350:role/piksel-tf-plan-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Trigger CodeBuild plan

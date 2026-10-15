@@ -182,9 +182,7 @@ resource "aws_iam_role" "github_tf_deploy" {
       Condition = {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-        }
-        StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:piksel-ina/terraform-iac:*"
+          "token.actions.githubusercontent.com:sub" = "repo:piksel-ina/terraform-iac:ref:refs/heads/main"
         }
       }
     }]
@@ -227,6 +225,54 @@ resource "aws_iam_policy" "github_tf_deploy" {
 resource "aws_iam_role_policy_attachment" "github_tf_deploy" {
   role       = aws_iam_role.github_tf_deploy.name
   policy_arn = aws_iam_policy.github_tf_deploy.arn
+}
+
+resource "aws_iam_role" "github_tf_plan" {
+  name = "piksel-tf-plan-github-actions"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          "token.actions.githubusercontent.com:sub" = "repo:piksel-ina/terraform-iac:pull_request"
+        }
+      }
+    }]
+  })
+
+  tags = merge(var.default_tags, { ManagedBy = "Terraform" })
+}
+
+resource "aws_iam_policy" "github_tf_plan" {
+  name = "piksel-tf-plan-github-actions-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["codebuild:StartBuild", "codebuild:BatchGetBuilds"]
+        Resource = [module.codebuild.plan_project_arn]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["logs:GetLogEvents"]
+        Resource = [module.codebuild.plan_log_group_arn]
+      }
+    ]
+  })
+
+  tags = merge(var.default_tags, { ManagedBy = "Terraform" })
+}
+
+resource "aws_iam_role_policy_attachment" "github_tf_plan" {
+  role       = aws_iam_role.github_tf_plan.name
+  policy_arn = aws_iam_policy.github_tf_plan.arn
 }
 
 module "website" {
