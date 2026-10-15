@@ -180,6 +180,22 @@ module "eks" {
       type        = "egress"
       cidr_blocks = ["0.0.0.0/0"]
     }
+    ingress_nodes_http = {
+      description = "Node to node ingress controller HTTP"
+      protocol    = "tcp"
+      from_port   = 80
+      to_port     = 80
+      type        = "ingress"
+      self        = true
+    }
+    ingress_nodes_https = {
+      description = "Node to node ingress controller HTTPS"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      self        = true
+    }
   }
 
   node_security_group_tags = merge(local.tags, {
