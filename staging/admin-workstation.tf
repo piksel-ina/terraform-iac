@@ -95,6 +95,20 @@ data "aws_iam_policy_document" "admin_ecr" {
     ]
     resources = ["arn:aws:ecr:${local.admin_region}:686410905891:repository/*"]
   }
+
+  statement {
+    sid    = "EcrPushJupyterGpu"
+    effect = "Allow"
+    actions = [
+      "ecr:PutImage",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload",
+      "ecr:DescribeImages",
+      "ecr:ListImages",
+    ]
+    resources = ["arn:aws:ecr:${local.admin_region}:686410905891:repository/jupyter-gpu"]
+  }
 }
 
 resource "aws_iam_role_policy" "admin_ecr" {
