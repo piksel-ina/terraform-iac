@@ -91,12 +91,11 @@ output "database_metadata" {
 
 # --- Cluster Addons ---
 output "cluster_addons_metadata" {
-  description = "Cluster addon Helm release statuses"
+  description = "Cluster addon namespaces and IAM role"
   value = {
-    cert-manager   = module.cluster_addons.cert_manager_status
-    ingress-nginx  = module.cluster_addons.ingress_nginx_status
-    metrics-server = module.cluster_addons.metrics_server_status
-    external-dns   = module.cluster_addons.external_dns_status
+    cert_manager_namespace  = module.cluster_addons.cert_manager_namespace
+    ingress_nginx_namespace = module.cluster_addons.ingress_nginx_namespace
+    external_dns_role_arn   = module.cluster_addons.external_dns_role_arn
   }
 }
 

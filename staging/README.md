@@ -63,9 +63,9 @@ Edit `backup.sh` if needed:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.73.0 |
-| <a name="provider_aws.aws"></a> [aws.aws](#provider\_aws.aws) | 6.73.0 |
-| <a name="provider_cloudinit"></a> [cloudinit](#provider\_cloudinit) | 2.4.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.53.0 |
+| <a name="provider_aws.aws"></a> [aws.aws](#provider\_aws.aws) | 6.53.0 |
+| <a name="provider_cloudinit"></a> [cloudinit](#provider\_cloudinit) | 2.4.0 |
 
 ## Modules
 
@@ -132,7 +132,7 @@ Edit `backup.sh` if needed:
 |------|-------------|
 | <a name="output_account_id"></a> [account\_id](#output\_account\_id) | The AWS account ID |
 | <a name="output_applications_metadata"></a> [applications\_metadata](#output\_applications\_metadata) | Output of applications module |
-| <a name="output_cluster_addons_metadata"></a> [cluster\_addons\_metadata](#output\_cluster\_addons\_metadata) | Cluster addon Helm release statuses |
+| <a name="output_cluster_addons_metadata"></a> [cluster\_addons\_metadata](#output\_cluster\_addons\_metadata) | Cluster addon namespaces and IAM role |
 | <a name="output_codebuild_metadata"></a> [codebuild\_metadata](#output\_codebuild\_metadata) | CodeBuild project details for Terraform CI/CD |
 | <a name="output_database_metadata"></a> [database\_metadata](#output\_database\_metadata) | Output of RDS database configuration and resources |
 | <a name="output_efs_metadata"></a> [efs\_metadata](#output\_efs\_metadata) | Output of EFS filesystem and security group |
