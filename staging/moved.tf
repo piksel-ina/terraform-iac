@@ -355,3 +355,28 @@ moved {
   from = module.external-dns.helm_release.external_dns
   to   = module.cluster_addons.helm_release.external_dns
 }
+
+moved {
+  from = module.rds.module.security_group.aws_security_group.this_name_prefix[0]
+  to   = module.rds.module.security_group.aws_security_group.this[0]
+}
+
+moved {
+  from = module.eks_cluster.module.eks.aws_eks_access_entry.this["admin-access"]
+  to   = module.eks_cluster.module.eks.aws_eks_access_entry.this["admin"]
+}
+
+moved {
+  from = module.eks_cluster.module.eks.aws_eks_access_entry.this["codebuild-access"]
+  to   = module.eks_cluster.module.eks.aws_eks_access_entry.this["codebuild"]
+}
+
+moved {
+  from = module.eks_cluster.module.eks.aws_eks_access_policy_association.this["admin-access_single"]
+  to   = module.eks_cluster.module.eks.aws_eks_access_policy_association.this["admin_cluster_admin"]
+}
+
+moved {
+  from = module.eks_cluster.module.eks.aws_eks_access_policy_association.this["codebuild-access_single"]
+  to   = module.eks_cluster.module.eks.aws_eks_access_policy_association.this["codebuild_access"]
+}
