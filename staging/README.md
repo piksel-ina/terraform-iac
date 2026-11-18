@@ -52,12 +52,12 @@ Edit `backup.sh` if needed:
 | Name | Version |
 |------|---------|
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0, < 7.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 2.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 3.2 |
 | <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | 1.19.0 |
-| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | ~> 2.0 |
-| <a name="requirement_postgresql"></a> [postgresql](#requirement\_postgresql) | 1.26.0 |
+| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | ~> 3.2 |
+| <a name="requirement_postgresql"></a> [postgresql](#requirement\_postgresql) | ~> 1.27 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.0 |
-| <a name="requirement_time"></a> [time](#requirement\_time) | 0.13.1 |
+| <a name="requirement_time"></a> [time](#requirement\_time) | ~> 0.14 |
 
 ## Providers
 
@@ -71,14 +71,14 @@ Edit `backup.sh` if needed:
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_applications"></a> [applications](#module\_applications) | ../applications | n/a |
-| <a name="module_cluster-addons"></a> [cluster-addons](#module\_cluster-addons) | ../cluster-addons | n/a |
+| <a name="module_applications"></a> [applications](#module\_applications) | ../modules/applications | n/a |
+| <a name="module_cluster_addons"></a> [cluster\_addons](#module\_cluster\_addons) | ../modules/cluster-addons | n/a |
 | <a name="module_codebuild"></a> [codebuild](#module\_codebuild) | ../modules/codebuild | n/a |
-| <a name="module_database"></a> [database](#module\_database) | ../aws-database | n/a |
-| <a name="module_eks-cluster"></a> [eks-cluster](#module\_eks-cluster) | ../aws-eks-cluster | n/a |
-| <a name="module_external-dns"></a> [external-dns](#module\_external-dns) | ../external-dns | n/a |
-| <a name="module_karpenter"></a> [karpenter](#module\_karpenter) | ../karpenter | n/a |
+| <a name="module_efs"></a> [efs](#module\_efs) | ../modules/efs | n/a |
+| <a name="module_eks_cluster"></a> [eks\_cluster](#module\_eks\_cluster) | ../modules/eks-cluster | n/a |
+| <a name="module_karpenter"></a> [karpenter](#module\_karpenter) | ../modules/karpenter | n/a |
 | <a name="module_networks"></a> [networks](#module\_networks) | ../networks | n/a |
+| <a name="module_rds"></a> [rds](#module\_rds) | ../modules/rds | n/a |
 | <a name="module_s3_bucket"></a> [s3\_bucket](#module\_s3\_bucket) | ../modules/s3-bucket | n/a |
 
 ## Resources
@@ -131,20 +131,14 @@ Edit `backup.sh` if needed:
 | Name | Description |
 |------|-------------|
 | <a name="output_account_id"></a> [account\_id](#output\_account\_id) | The AWS account ID |
-| <a name="output_argo_workflow_metadata"></a> [argo\_workflow\_metadata](#output\_argo\_workflow\_metadata) | Output of Argo Workflow configuration and resources |
+| <a name="output_applications_metadata"></a> [applications\_metadata](#output\_applications\_metadata) | Output of applications module |
 | <a name="output_cluster_addons_metadata"></a> [cluster\_addons\_metadata](#output\_cluster\_addons\_metadata) | Cluster addon Helm release statuses |
 | <a name="output_codebuild_metadata"></a> [codebuild\_metadata](#output\_codebuild\_metadata) | CodeBuild project details for Terraform CI/CD |
 | <a name="output_database_metadata"></a> [database\_metadata](#output\_database\_metadata) | Output of RDS database configuration and resources |
+| <a name="output_efs_metadata"></a> [efs\_metadata](#output\_efs\_metadata) | Output of EFS filesystem and security group |
 | <a name="output_eks_cluster_metadata"></a> [eks\_cluster\_metadata](#output\_eks\_cluster\_metadata) | Output of EKS Cluster |
-| <a name="output_external_dns_metadata"></a> [external\_dns\_metadata](#output\_external\_dns\_metadata) | Output of External DNS configuration and resources |
 | <a name="output_github_tf_deploy_role_arn"></a> [github\_tf\_deploy\_role\_arn](#output\_github\_tf\_deploy\_role\_arn) | ARN of the IAM role for GitHub Actions Terraform deployment (OIDC) |
-| <a name="output_grafana_metadata"></a> [grafana\_metadata](#output\_grafana\_metadata) | Output of Grafana configuration and resources. Values are empty strings when Grafana is disabled. |
-| <a name="output_jupyterhub_metadata"></a> [jupyterhub\_metadata](#output\_jupyterhub\_metadata) | Output of JupyterHub configuration and resources |
 | <a name="output_karpenter_metadata"></a> [karpenter\_metadata](#output\_karpenter\_metadata) | Output of Karpenter configuration and resources |
 | <a name="output_network_metadata"></a> [network\_metadata](#output\_network\_metadata) | Grouped network and connectivity metadata |
-| <a name="output_odc_metadata"></a> [odc\_metadata](#output\_odc\_metadata) | Output of ODC configuration and resources |
-| <a name="output_odc_ows_cache_metadata"></a> [odc\_ows\_cache\_metadata](#output\_odc\_ows\_cache\_metadata) | Output of ODC OWS Cache configuration and resources |
 | <a name="output_s3_public_metadata"></a> [s3\_public\_metadata](#output\_s3\_public\_metadata) | Output of S3 bucket |
-| <a name="output_stac_metadata"></a> [stac\_metadata](#output\_stac\_metadata) | Output of STAC configuration and resources |
-| <a name="output_terria_metadata"></a> [terria\_metadata](#output\_terria\_metadata) | Output of Terria configuration and resources |
 <!-- END_TF_DOCS -->
