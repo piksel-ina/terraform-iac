@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "admin_s3" {
       "arn:aws:s3:::usgs-landsat",
       "arn:aws:s3:::copernicus-dem-30m",
       "arn:aws:s3:::e84-earth-search-sentinel-data",
-      module.s3_bucket.public_bucket_arn,
+      module.s3_bucket.public_data_bucket_arn,
     ]
   }
 
@@ -63,7 +63,7 @@ data "aws_iam_policy_document" "admin_s3" {
     sid       = "ReadWriteObjects"
     effect    = "Allow"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-    resources = ["${module.s3_bucket.public_bucket_arn}/*"]
+    resources = ["${module.s3_bucket.public_data_bucket_arn}/*"]
   }
 }
 

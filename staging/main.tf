@@ -16,11 +16,12 @@ module "networks" {
 
 
 module "s3_bucket" {
-  source = "../aws-s3-bucket"
+  source = "../modules/s3-bucket"
 
-  project      = var.project
-  environment  = var.environment
-  default_tags = var.default_tags
+  project            = var.project
+  environment        = var.environment
+  create_public_data = true
+  default_tags       = var.default_tags
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
@@ -257,9 +258,9 @@ module "applications" {
   subdomains                           = local.subdomains
   public_hosted_zone_id                = "Z00431943HAESMJJNQCQR"
   oauth_tenant                         = "oauth.piksel.big.go.id"
-  internal_buckets                     = [module.s3_bucket.public_bucket_name]
+  internal_buckets                     = [module.s3_bucket.public_data_bucket_name]
   odc_cloudfront_crossaccount_role_arn = "arn:aws:iam::686410905891:role/odc-cloudfront-crossaccount-role-staging"
-  public_bucket_arn                    = module.s3_bucket.public_bucket_arn
+  public_bucket_arn                    = module.s3_bucket.public_data_bucket_arn
   read_external_buckets = [
     "usgs-landsat",
     "copernicus-dem-30m",
