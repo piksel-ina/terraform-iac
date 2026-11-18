@@ -217,7 +217,7 @@ module "cluster-addons" {
 }
 
 module "codebuild" {
-  source = "../codebuild"
+  source = "../modules/codebuild"
 
   project             = var.project
   environment         = var.environment
@@ -226,7 +226,7 @@ module "codebuild" {
   vpc_id              = module.networks.vpc_id
   vpc_cidr_block      = module.networks.vpc_cidr_block
   private_subnet_ids  = module.networks.private_subnets
-  cluster_name        = local.cluster_name
+  tf_working_dir      = "staging"
   tf_state_bucket_arn = "arn:aws:s3:::piksel-staging-tfstate"
   default_tags        = var.default_tags
 }

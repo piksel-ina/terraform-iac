@@ -73,7 +73,7 @@ Edit `backup.sh` if needed:
 |------|--------|---------|
 | <a name="module_applications"></a> [applications](#module\_applications) | ../applications | n/a |
 | <a name="module_cluster-addons"></a> [cluster-addons](#module\_cluster-addons) | ../cluster-addons | n/a |
-| <a name="module_codebuild"></a> [codebuild](#module\_codebuild) | ../codebuild | n/a |
+| <a name="module_codebuild"></a> [codebuild](#module\_codebuild) | ../modules/codebuild | n/a |
 | <a name="module_database"></a> [database](#module\_database) | ../aws-database | n/a |
 | <a name="module_eks-cluster"></a> [eks-cluster](#module\_eks-cluster) | ../aws-eks-cluster | n/a |
 | <a name="module_external-dns"></a> [external-dns](#module\_external-dns) | ../external-dns | n/a |
