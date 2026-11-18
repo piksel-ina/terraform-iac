@@ -73,8 +73,8 @@ output "karpenter_metadata" {
 output "s3_public_metadata" {
   description = "Output of S3 bucket"
   value = {
-    name = module.s3_bucket.public_bucket_name
-    arn  = module.s3_bucket.public_bucket_arn
+    name = module.s3_bucket.public_data_bucket_name
+    arn  = module.s3_bucket.public_data_bucket_arn
   }
 }
 

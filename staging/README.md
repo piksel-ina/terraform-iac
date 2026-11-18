@@ -79,7 +79,7 @@ Edit `backup.sh` if needed:
 | <a name="module_external-dns"></a> [external-dns](#module\_external-dns) | ../external-dns | n/a |
 | <a name="module_karpenter"></a> [karpenter](#module\_karpenter) | ../karpenter | n/a |
 | <a name="module_networks"></a> [networks](#module\_networks) | ../networks | n/a |
-| <a name="module_s3_bucket"></a> [s3\_bucket](#module\_s3\_bucket) | ../aws-s3-bucket | n/a |
+| <a name="module_s3_bucket"></a> [s3\_bucket](#module\_s3\_bucket) | ../modules/s3-bucket | n/a |
 
 ## Resources
 

@@ -1,34 +1,39 @@
 moved {
-  from = module.codebuild.aws_security_group.codebuild
-  to   = module.codebuild.aws_security_group.this
+  from = module.s3_bucket.aws_s3_bucket.public
+  to   = module.s3_bucket.aws_s3_bucket.public_data[0]
 }
 
 moved {
-  from = module.codebuild.aws_iam_role.codebuild
-  to   = module.codebuild.aws_iam_role.this
+  from = module.s3_bucket.aws_s3_bucket_ownership_controls.public_ownership
+  to   = module.s3_bucket.aws_s3_bucket_ownership_controls.public_data[0]
 }
 
 moved {
-  from = module.codebuild.aws_iam_policy.codebuild_iam
-  to   = module.codebuild.aws_iam_policy.iam
+  from = module.s3_bucket.aws_s3_bucket_public_access_block.public_access
+  to   = module.s3_bucket.aws_s3_bucket_public_access_block.public_data[0]
 }
 
 moved {
-  from = module.codebuild.aws_iam_role_policy_attachment.codebuild_poweruser
-  to   = module.codebuild.aws_iam_role_policy_attachment.poweruser
+  from = module.s3_bucket.aws_s3_bucket_acl.public
+  to   = module.s3_bucket.aws_s3_bucket_acl.public_data[0]
 }
 
 moved {
-  from = module.codebuild.aws_iam_role_policy_attachment.codebuild_iam
-  to   = module.codebuild.aws_iam_role_policy_attachment.iam
+  from = module.s3_bucket.aws_s3_bucket_cors_configuration.public
+  to   = module.s3_bucket.aws_s3_bucket_cors_configuration.public_data[0]
 }
 
 moved {
-  from = module.codebuild.aws_codebuild_project.plan
-  to   = module.codebuild.aws_codebuild_project.this["plan"]
+  from = module.s3_bucket.aws_s3_bucket_policy.public_read_policy
+  to   = module.s3_bucket.aws_s3_bucket_policy.public_data[0]
 }
 
 moved {
-  from = module.codebuild.aws_codebuild_project.apply
-  to   = module.codebuild.aws_codebuild_project.this["apply"]
+  from = module.s3_bucket.aws_s3_bucket_lifecycle_configuration.public
+  to   = module.s3_bucket.aws_s3_bucket_lifecycle_configuration.public_data[0]
+}
+
+moved {
+  from = module.s3_bucket.aws_s3_bucket_website_configuration.public
+  to   = module.s3_bucket.aws_s3_bucket_website_configuration.public_data[0]
 }
