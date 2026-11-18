@@ -63,9 +63,9 @@ Edit `backup.sh` if needed:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.53.0 |
-| <a name="provider_aws.aws"></a> [aws.aws](#provider\_aws.aws) | 6.53.0 |
-| <a name="provider_cloudinit"></a> [cloudinit](#provider\_cloudinit) | 2.4.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.73.0 |
+| <a name="provider_aws.aws"></a> [aws.aws](#provider\_aws.aws) | 6.73.0 |
+| <a name="provider_cloudinit"></a> [cloudinit](#provider\_cloudinit) | 2.4.1 |
 
 ## Modules
 
