@@ -78,25 +78,6 @@ output "s3_public_metadata" {
   }
 }
 
-# --- Website S3 Static Hosting ---
-output "website_metadata" {
-  description = "Output of S3 static website hosting configuration and resources"
-  value = {
-    bucket_name                = module.website.bucket_name
-    bucket_arn                 = module.website.bucket_arn
-    cloudfront_distribution_id = module.website.cloudfront_distribution_id
-    cloudfront_domain_name     = module.website.cloudfront_domain_name
-    certificate_arn            = module.website.certificate_arn
-    website_url                = module.website.website_url
-    deployment_commands        = module.website.deployment_commands
-  }
-}
-
-output "github_website_deploy_role_arn" {
-  description = "ARN of the IAM role for GitHub Actions website deployment (OIDC)"
-  value       = aws_iam_role.github_website_deploy.arn
-}
-
 # --- Database outputs ---
 output "database_metadata" {
   description = "Output of RDS database configuration and resources"
