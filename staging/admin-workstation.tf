@@ -1,7 +1,6 @@
 locals {
   admin_name           = "piksel-admin"
   admin_region         = var.aws_region
-  efs_dns              = "${module.eks-cluster.efs_filesystem_id}.efs.${var.aws_region}.amazonaws.com"
   admin_instance_type  = "m6i.xlarge"
   admin_root_volume_gb = 150
 }
@@ -154,18 +153,6 @@ resource "aws_security_group" "admin" {
   })
 }
 
-# Grant this box NFS access on the shared EFS security group.
-resource "aws_security_group_rule" "admin_efs_ingress" {
-  provider                 = aws.aws
-  description              = "NFS from admin workstation"
-  type                     = "ingress"
-  from_port                = 2049
-  to_port                  = 2049
-  protocol                 = "tcp"
-  security_group_id        = module.eks-cluster.efs_security_group_id
-  source_security_group_id = aws_security_group.admin.id
-}
-
 # ============================================================
 # Cloud-init
 # ============================================================
@@ -204,7 +191,6 @@ data "cloudinit_config" "admin" {
         - fzf
         - tar
         - gzip
-        - nfs-common
 
       runcmd:
         # ---- Wait for apt locks to clear ----
@@ -245,11 +231,6 @@ data "cloudinit_config" "admin" {
         - [ bash, -lc, "set -euo pipefail; curl -fsSL https://starship.rs/install.sh | sh -s -- -y" ]
         - [ bash, -lc, "set -euo pipefail; sudo -u ubuntu -H bash -lc 'mkdir -p ~/.config && starship preset no-empty-icons -o ~/.config/starship.toml'" ]
         - [ bash, -lc, "set -euo pipefail; grep -qxF 'eval \"$(starship init bash)\"' /home/ubuntu/.bashrc || echo 'eval \"$(starship init bash)\"' >> /home/ubuntu/.bashrc" ]
-
-        # ---- Mount EFS filesystem root at /mnt/efs ----
-        - [ bash, -lc, "set -euo pipefail; mkdir -p /mnt/efs" ]
-        - [ bash, -lc, "set -euo pipefail; grep -q '${local.efs_dns}' /etc/fstab || echo '${local.efs_dns}:/ /mnt/efs nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev 0 0' >> /etc/fstab" ]
-        - [ bash, -lc, "set -euo pipefail; for i in $(seq 1 12); do mount /mnt/efs && break || (echo \"efs mount retry $i\"; sleep 5); done" ]
 
         - [ bash, -lc, "grep -qxF 'export EDITOR=vim' /home/ubuntu/.bashrc || echo 'export EDITOR=vim' >> /home/ubuntu/.bashrc" ]
         - [ bash, -lc, "chown ubuntu:ubuntu /home/ubuntu/.bashrc" ]
