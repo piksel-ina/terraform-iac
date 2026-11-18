@@ -14,15 +14,15 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
+      version = "~> 3.2"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.0"
+      version = "~> 3.2"
     }
     time = {
       source  = "hashicorp/time"
-      version = "0.13.1"
+      version = "~> 0.14"
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
@@ -30,7 +30,7 @@ terraform {
     }
     postgresql = {
       source  = "cyrilgdn/postgresql"
-      version = "1.26.0"
+      version = "~> 1.27"
     }
     random = {
       source  = "hashicorp/random"
@@ -45,39 +45,39 @@ provider "aws" {
 }
 
 provider "kubernetes" {
-  host                   = module.eks-cluster.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks-cluster.cluster_certificate_authority_data)
+  host                   = module.eks_cluster.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks_cluster.cluster_certificate_authority_data)
 
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
     # This requires the awscli to be installed locally where Terraform is executed
-    args = ["eks", "get-token", "--cluster-name", module.eks-cluster.cluster_name]
+    args = ["eks", "get-token", "--cluster-name", module.eks_cluster.cluster_name]
   }
 }
 
 provider "helm" {
-  kubernetes {
-    host                   = module.eks-cluster.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks-cluster.cluster_certificate_authority_data)
+  kubernetes = {
+    host                   = module.eks_cluster.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks_cluster.cluster_certificate_authority_data)
 
-    exec {
+    exec = {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.eks-cluster.cluster_name]
+      args        = ["eks", "get-token", "--cluster-name", module.eks_cluster.cluster_name]
     }
   }
 }
 
 provider "kubectl" {
   apply_retry_count      = 15
-  host                   = module.eks-cluster.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks-cluster.cluster_certificate_authority_data)
+  host                   = module.eks_cluster.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks_cluster.cluster_certificate_authority_data)
   load_config_file       = false
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.eks-cluster.cluster_name, "--output", "json"]
+    args        = ["eks", "get-token", "--cluster-name", module.eks_cluster.cluster_name, "--output", "json"]
   }
 }
 

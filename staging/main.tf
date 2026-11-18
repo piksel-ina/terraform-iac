@@ -18,10 +18,12 @@ module "networks" {
 module "s3_bucket" {
   source = "../modules/s3-bucket"
 
-  project            = var.project
-  environment        = var.environment
-  create_public_data = true
-  default_tags       = var.default_tags
+  project               = var.project
+  environment           = var.environment
+  create_public_data    = true
+  create_argo_artifacts = true
+  create_terria         = true
+  default_tags          = var.default_tags
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
@@ -140,81 +142,90 @@ resource "aws_iam_role_policy_attachment" "github_tf_plan" {
   policy_arn = aws_iam_policy.github_tf_plan.arn
 }
 
-module "database" {
-  source = "../aws-database"
+module "rds" {
+  source = "../modules/rds"
 
   project                 = var.project
   environment             = var.environment
   vpc_id                  = module.networks.vpc_id
   vpc_cidr_block          = module.networks.vpc_cidr_block
   private_subnets_ids     = module.networks.private_subnets
-  cluster_name            = module.eks-cluster.cluster_name
+  cluster_name            = module.eks_cluster.cluster_name
   default_tags            = var.default_tags
-  db_instance_class       = "db.t4g.large"
-  db_allocated_storage    = 50
+  engine_version          = "17.9"
+  instance_class          = "db.t4g.large"
+  allocated_storage       = 50
+  max_allocated_storage   = 0
   backup_retention_period = 14
-  db_multi_az             = false
+  multi_az                = false
   pg_host                 = var.pg_host
   pg_port                 = var.pg_port
 }
 
-module "eks-cluster" {
-  source = "../aws-eks-cluster"
+module "eks_cluster" {
+  source = "../modules/eks-cluster"
 
-  account_id           = module.networks.account_id
   cluster_name         = local.cluster_name
-  vpc_id               = module.networks.vpc_id
-  vpc_cidr_block       = module.networks.vpc_cidr_block
-  private_subnets_ids  = module.networks.private_subnets
-  eks-version          = "1.34"
-  coredns-version      = "v1.13.2-eksbuild.4"
-  vpc-cni-version      = "v1.21.1-eksbuild.7"
-  kube-proxy-version   = "v1.34.6-eksbuild.2"
-  ebs-csi-version      = "v1.57.1-eksbuild.1"
-  pod-identity-version = "v1.3.10-eksbuild.2"
-  sso-admin-role-arn   = "arn:aws:iam::326641642924:role/aws-reserved/sso.amazonaws.com/ap-southeast-3/AWSReservedSSO_AdministratorAccess_0e029b26d9443921"
-  codebuild_role_arn   = module.codebuild.codebuild_role_arn
-  efs_backup_enabled   = false
-  default_tags         = var.default_tags
+  eks_version          = "1.34"
+  coredns_version      = "v1.13.2-eksbuild.4"
+  vpc_cni_version      = "v1.21.1-eksbuild.7"
+  kube_proxy_version   = "v1.34.6-eksbuild.2"
+  ebs_csi_version      = "v1.57.1-eksbuild.1"
+  pod_identity_version = "v1.3.10-eksbuild.2"
+
+  vpc_id             = module.networks.vpc_id
+  private_subnet_ids = module.networks.private_subnets
+
+  sso_admin_role_arn = "arn:aws:iam::326641642924:role/aws-reserved/sso.amazonaws.com/ap-southeast-3/AWSReservedSSO_AdministratorAccess_0e029b26d9443921"
+
+  additional_access_entries = {
+    codebuild = {
+      principal_arn = module.codebuild.codebuild_role_arn
+    }
+  }
+
+  efs_backup_enabled = false
+  default_tags       = var.default_tags
 }
 
-module "external-dns" {
-  source = "../external-dns"
+module "efs" {
+  source = "../modules/efs"
 
-  aws_region                        = var.aws_region
-  project                           = var.project
-  environment                       = var.environment
-  cluster_name                      = local.cluster_name
-  subdomains                        = local.subdomains
-  oidc_provider                     = module.eks-cluster.cluster_oidc_issuer_url
-  oidc_provider_arn                 = module.eks-cluster.cluster_oidc_provider_arn
-  externaldns_crossaccount_role_arn = "arn:aws:iam::686410905891:role/externaldns-crossaccount-role-staging"
-  default_tags                      = var.default_tags
+  cluster_name           = module.eks_cluster.cluster_name
+  vpc_id                 = module.networks.vpc_id
+  subnet_ids             = module.networks.private_subnets
+  node_security_group_id = module.eks_cluster.node_security_group_id
+  backup_enabled         = false
+  default_tags           = var.default_tags
 }
 
 module "karpenter" {
-  source = "../karpenter"
+  source = "../modules/karpenter"
 
-  cluster_name                = local.cluster_name
-  oidc_provider_arn           = module.eks-cluster.cluster_oidc_provider_arn
-  cluster_endpoint            = module.eks-cluster.cluster_endpoint
-  default_nodepool_ami_alias  = "al2023@v20260403"
-  default_nodepool_node_limit = 10000
-  data_production_cpu_limit   = 450
-  gpu_nodepool_ami            = "amazon-eks-node-al2023-x86_64-nvidia-1.34-v20260403"
-  gpu_nodepool_node_limit     = 20
-  default_tags                = var.default_tags
+  cluster_name              = module.eks_cluster.cluster_name
+  cluster_endpoint          = module.eks_cluster.cluster_endpoint
+  default_ami_alias         = "al2023@v20260403"
+  gpu_ami_name              = "amazon-eks-node-al2023-x86_64-nvidia-1.34-v20260403"
+  data_production_cpu_limit = 450
+  gpu_nodepool_limit        = 20
+  default_tags              = var.default_tags
 }
 
-module "cluster-addons" {
-  source = "../cluster-addons"
+module "cluster_addons" {
+  source = "../modules/cluster-addons"
 
-  cluster_name                   = local.cluster_name
-  efs_filesystem_id              = module.eks-cluster.efs_filesystem_id
-  efs_coastlines_access_point_id = module.eks-cluster.efs_coastlines_access_point_id
-  efs_csi_irsa_role_arn          = module.eks-cluster.efs_csi_irsa_role_arn
-  aws_region                     = var.aws_region
-  default_tags                   = var.default_tags
+  cluster_name = module.eks_cluster.cluster_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  external_dns_target_role_arn = "arn:aws:iam::686410905891:role/externaldns-pod-identity-target-role-staging"
+  external_dns_domain_filters  = local.subdomains
+  external_dns_zone_id_filters = ["Z00431943HAESMJJNQCQR"]
+
+  acme_email   = "piksel@big.go.id"
+  default_tags = var.default_tags
+
+  depends_on = [module.karpenter]
 }
 
 module "codebuild" {
@@ -239,42 +250,45 @@ resource "aws_security_group_rule" "codebuild_to_eks_api" {
   to_port                  = 443
   protocol                 = "tcp"
   source_security_group_id = module.codebuild.codebuild_security_group_id
-  security_group_id        = module.eks-cluster.cluster_security_group_id
+  security_group_id        = module.eks_cluster.cluster_security_group_id
 }
 
 module "applications" {
-  source = "../applications"
+  source = "../modules/applications"
 
-  account_id                           = module.networks.account_id
-  project                              = var.project
-  environment                          = var.environment
-  cluster_name                         = module.eks-cluster.cluster_name
-  default_tags                         = var.default_tags
-  eks_oidc_provider_arn                = module.eks-cluster.cluster_oidc_provider_arn
-  oidc_issuer_url                      = module.eks-cluster.cluster_oidc_issuer_url
-  db_namespace                         = module.database.db_namespace
-  db_address                           = module.database.db_address
-  k8s_db_service                       = module.database.k8s_db_service
+  providers = {
+    aws.virginia      = aws.virginia
+    aws.cross_account = aws.cross_account
+  }
+
+  project      = var.project
+  environment  = var.environment
+  aws_region   = var.aws_region
+  default_tags = var.default_tags
+
+  account_id   = module.networks.account_id
+  cluster_name = module.eks_cluster.cluster_name
+
   subdomains                           = local.subdomains
   public_hosted_zone_id                = "Z00431943HAESMJJNQCQR"
-  oauth_tenant                         = "oauth.piksel.big.go.id"
-  internal_buckets                     = [module.s3_bucket.public_data_bucket_name]
+  cognito_auth_domain                  = "oauth.piksel.big.go.id"
   odc_cloudfront_crossaccount_role_arn = "arn:aws:iam::686410905891:role/odc-cloudfront-crossaccount-role-staging"
-  public_bucket_arn                    = module.s3_bucket.public_data_bucket_arn
+
+  internal_buckets           = [module.s3_bucket.public_data_bucket_name]
+  public_bucket_arn          = module.s3_bucket.public_data_bucket_arn
+  argo_artifacts_bucket_name = module.s3_bucket.argo_artifacts_bucket_name
+  terria_bucket_name         = module.s3_bucket.terria_bucket_name
   read_external_buckets = [
     "usgs-landsat",
     "copernicus-dem-30m",
     "e84-earth-search-sentinel-data"
   ]
-  waf_log_retention_days    = 30
-  lifecycle_expiration_days = 60
-  enable_grafana            = false
 
-  argo_password       = module.database.user_passwords.argo
-  grafana_password    = module.database.user_passwords.grafana
-  jupyterhub_password = module.database.user_passwords.jupyterhub
-  odc_write_password  = module.database.user_passwords.odc
-  odc_read_password   = module.database.user_passwords.odcread
-  stac_write_password = module.database.user_passwords.stac
-  stac_read_password  = module.database.user_passwords.stacread
+  db_namespace      = module.rds.db_namespace
+  db_address        = module.rds.db_address
+  k8s_db_service    = module.rds.k8s_db_service
+  db_user_passwords = module.rds.user_passwords
+
+  waf_log_retention_days = 30
+  enable_grafana         = false
 }
