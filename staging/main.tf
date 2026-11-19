@@ -22,7 +22,7 @@ module "s3_bucket" {
   environment           = var.environment
   create_public_data    = true
   create_argo_artifacts = true
-  create_terria         = true
+  create_terria         = false
   default_tags          = var.default_tags
 }
 
@@ -291,5 +291,6 @@ module "applications" {
 
   waf_log_retention_days    = 30
   enable_grafana            = false
+  enable_terria             = false
   jupyterhub_allowed_groups = ["staging-users", "admin"]
 }
