@@ -111,22 +111,22 @@ output "stac_data_reader_role_arn" {
 # --- TerriaMap ---
 output "terria_namespace" {
   description = "Kubernetes namespace for TerriaMap."
-  value       = kubernetes_namespace.terria.metadata[0].name
+  value       = try(kubernetes_namespace.terria[0].metadata[0].name, null)
 }
 
 output "terria_role_arn" {
   description = "IAM role ARN for the TerriaMap service account (Pod Identity)."
-  value       = aws_iam_role.terria.arn
+  value       = try(aws_iam_role.terria[0].arn, null)
 }
 
 output "terria_service_account_name" {
   description = "Service account name for TerriaMap."
-  value       = kubernetes_service_account.terria.metadata[0].name
+  value       = try(kubernetes_service_account.terria[0].metadata[0].name, null)
 }
 
 output "terria_configmap_name" {
   description = "Name of the ConfigMap containing TerriaMap bucket configuration."
-  value       = kubernetes_config_map.terria_config.metadata[0].name
+  value       = try(kubernetes_config_map.terria_config[0].metadata[0].name, null)
 }
 
 # --- Tile server ---

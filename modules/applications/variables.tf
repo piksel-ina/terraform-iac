@@ -75,6 +75,7 @@ variable "argo_artifacts_bucket_name" {
 variable "terria_bucket_name" {
   description = "Name of the TerriaMap sharing bucket (created by the s3-bucket module)."
   type        = string
+  default     = null
 }
 
 variable "db_namespace" {
@@ -106,6 +107,12 @@ variable "waf_log_retention_days" {
 
 variable "enable_grafana" {
   description = "Whether to create Grafana resources (secrets, IAM, Helm values). The monitoring namespace is always created."
+  type        = bool
+  default     = true
+}
+
+variable "enable_terria" {
+  description = "Whether to create TerriaMap resources (namespace, IAM, Pod Identity, ConfigMap)."
   type        = bool
   default     = true
 }
