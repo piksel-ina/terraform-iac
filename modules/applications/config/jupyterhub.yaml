@@ -5,7 +5,10 @@ hub:
     password: ${jhub_db_password}
   config:
     GenericOAuthenticator:
-      allow_all: true
+      allow_all: ${jhub_allow_all}
+      manage_groups: ${jhub_manage_groups}
+      claim_groups_key: "cognito:groups"
+      allowed_groups: ${jhub_allowed_groups}
       auto_login: true
       enable_auth_state: true
       auth_refresh_age: 300

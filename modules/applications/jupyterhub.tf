@@ -61,6 +61,9 @@ resource "kubernetes_secret" "jupyterhub" {
 
       jhub_auth_client_id     = split(":", data.aws_secretsmanager_secret_version.hub_client_secret.secret_string)[0]
       jhub_auth_client_secret = split(":", data.aws_secretsmanager_secret_version.hub_client_secret.secret_string)[1]
+      jhub_allow_all          = length(var.jupyterhub_allowed_groups) == 0
+      jhub_manage_groups      = length(var.jupyterhub_allowed_groups) > 0
+      jhub_allowed_groups     = jsonencode(var.jupyterhub_allowed_groups)
 
       cognito_auth_domain = var.cognito_auth_domain
 

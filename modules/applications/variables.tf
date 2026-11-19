@@ -109,3 +109,9 @@ variable "enable_grafana" {
   type        = bool
   default     = true
 }
+
+variable "jupyterhub_allowed_groups" {
+  description = "Cognito groups allowed to log into JupyterHub. Empty list allows all authenticated Cognito users."
+  type        = list(string)
+  default     = []
+}
