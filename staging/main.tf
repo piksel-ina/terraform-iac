@@ -289,6 +289,7 @@ module "applications" {
   k8s_db_service    = module.rds.k8s_db_service
   db_user_passwords = module.rds.user_passwords
 
-  waf_log_retention_days = 30
-  enable_grafana         = false
+  waf_log_retention_days    = 30
+  enable_grafana            = false
+  jupyterhub_allowed_groups = ["staging-users", "admin"]
 }
