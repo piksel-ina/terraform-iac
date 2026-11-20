@@ -56,21 +56,36 @@ resource "kubernetes_secret" "jupyterhub" {
   }
   data = {
     "values.yaml" = templatefile("${path.module}/config/jupyterhub.yaml", {
-      region    = var.aws_region
-      host_name = local.jhub_subdomain
+      region = var.aws_region
 
-      jhub_auth_client_id     = split(":", data.aws_secretsmanager_secret_version.hub_client_secret.secret_string)[0]
-      jhub_auth_client_secret = split(":", data.aws_secretsmanager_secret_version.hub_client_secret.secret_string)[1]
-      jhub_allow_all          = length(var.jupyterhub_allowed_groups) == 0
-      jhub_manage_groups      = length(var.jupyterhub_allowed_groups) > 0
-      jhub_allowed_groups     = jsonencode(var.jupyterhub_allowed_groups)
+      jhub_generic_oauth = jsonencode(merge(
+        {
+          allow_all              = length(var.jupyterhub_allowed_groups) == 0
+          auto_login             = true
+          enable_auth_state      = true
+          auth_refresh_age       = 300
+          refresh_pre_spawn      = true
+          userdata_from_id_token = true
+          client_id              = split(":", data.aws_secretsmanager_secret_version.hub_client_secret.secret_string)[0]
+          client_secret          = split(":", data.aws_secretsmanager_secret_version.hub_client_secret.secret_string)[1]
+          authorize_url          = "https://${var.cognito_auth_domain}/oauth2/authorize"
+          token_url              = "https://${var.cognito_auth_domain}/oauth2/token"
+          logout_redirect_url    = "https://${var.cognito_auth_domain}/logout?client_id=${split(":", data.aws_secretsmanager_secret_version.hub_client_secret.secret_string)[0]}&logout_uri=https://${local.jhub_subdomain}/"
+          login_service          = "AWS Cognito"
+          username_claim         = "email"
+          scope                  = ["openid", "email", "profile", "aws.cognito.signin.user.admin"]
+          admin_users            = ["muhammad.taufik@big.go.id"]
+        },
+        {
+          for k, v in {
+            manage_groups    = true
+            claim_groups_key = "cognito:groups"
+            allowed_groups   = var.jupyterhub_allowed_groups
+          } : k => v if length(var.jupyterhub_allowed_groups) > 0
+        }
+      ))
 
-      cognito_auth_domain = var.cognito_auth_domain
-
-      jhub_db_name     = "jupyterhub"
-      jhub_db_username = "jupyterhub"
       jhub_db_password = var.db_user_passwords["jupyterhub"]
-      jhub_db_hostname = var.k8s_db_service
 
       jhub_hub_cookie_secret_token = random_id.jhub_hub_cookie_secret_token.hex
       jhub_proxy_secret_token      = random_id.jhub_proxy_secret_token.hex
